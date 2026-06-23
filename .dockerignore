@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+**/dist
+.git
+dist
+data
+release/images
+*.tar
+*.tar.gz
+*.tar.zst
+/tmp
+.run
+*.log

@@ -1,0 +1,14 @@
+{
+  "storage_types": [
+    {
+      "type": "object-storage",
+      "required": true,
+      "size_hint": "1Gi",
+      "access_mode": "ReadWriteOnce",
+      "performance_tier": "bulk"
+    }
+  ],
+  "requires_network": true,
+  "requires_crds": false,
+  "min_k8s_version": "1.27.0"
+}

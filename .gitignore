@@ -1,0 +1,13 @@
+node_modules/
+dist/
+web/dist/
+server/dist/
+*.log
+.run/
+release/images/
+release/build/
+*.tar
+*.tar.gz
+*.tar.zst
+data/
+.DS_Store

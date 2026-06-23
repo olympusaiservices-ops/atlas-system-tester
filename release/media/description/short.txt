@@ -1,0 +1,1 @@
+Exercises every app-facing Atlas Core API endpoint and reports the results in a UI.

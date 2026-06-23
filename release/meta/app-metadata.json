@@ -1,0 +1,19 @@
+{
+  "display_name": "Atlas Verify",
+  "category": "developer-tools",
+  "tags": ["testing", "diagnostics", "api", "qa", "atlas-core"],
+  "maintainer": "Brandon",
+  "media": {
+    "icon_png": "media/icon/icon.png",
+    "short_description": "media/description/short.txt",
+    "long_description": "media/description/long.md",
+    "screenshots_dir": "media/screenshots/"
+  },
+  "containers": {
+    "index": "images/index.json"
+  },
+  "service": {
+    "primary_service_name": "atlas-varify",
+    "ports": [80]
+  }
+}

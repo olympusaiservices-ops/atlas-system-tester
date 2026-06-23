@@ -1,0 +1,83 @@
+# Atlas Verify
+
+An Atlas app that **exercises every app-facing Atlas Core API endpoint** and
+reports the result of each call in a live web UI. Deploys to an Atlas RKE2
+cluster as a normal sideloadable app.
+
+It covers 200+ endpoint tests across all five core services:
+
+| Service     | K8s service            | Tests |
+|-------------|------------------------|-------|
+| Identity    | `atlas-core-identity`  | 92    |
+| Email       | `atlas-core-email`     | 35    |
+| App Store   | `atlas-core-app-store` | 25    |
+| Network     | `atlas-core-network`   | 36    |
+| Portal API  | `atlas-core-portal-api`| 21    |
+
+## Features
+
+- **Browse & queue tests** — a catalog tree grouped by service and suite; pick
+  any combination and run it.
+- **Live results** — per-test status, latency, request and response, streamed
+  over SSE as the run progresses; filter by pass/fail/error/skip.
+- **Safety scoping** — `read` and isolated `write` tests run by default;
+  `destructive` and `system` tests are opt-in per run. Write tests create
+  throwaway resources and clean them up; they never touch pre-existing data.
+- **Auto-provisioning auth** — sign in with an admin account; Atlas Verify logs
+  in for a user token, self-registers an app, and mints a scoped M2M token to
+  reach the email/app-store/network APIs.
+- **Saveable plans** — store any selection + options as a named test plan (JSON
+  on the data volume, also downloadable/importable) to replay later.
+- **Run history** — every run is persisted and reviewable.
+
+## Architecture
+
+- **`server/`** — TypeScript (Fastify). Hosts the test engine, the Atlas client
+  + auth manager, the `/vapi/*` API, file-backed plan/run storage, and serves
+  the built SPA. Exposes unauthenticated `/health/live` and `/health/ready`.
+- **`web/`** — React + Vite SPA, built to static files served by the server.
+- One container, one image; a PVC at `/data/atlas-varify` holds plans + history.
+
+## Develop locally
+
+```bash
+npm install
+# point at the live cluster via port-forwards (separate terminals):
+#   kubectl -n atlas-core port-forward svc/atlas-core-identity   8001:80
+#   kubectl -n atlas-core port-forward svc/atlas-core-email      8002:80
+#   kubectl -n atlas-core port-forward svc/atlas-core-app-store  8003:80
+#   kubectl -n atlas-core port-forward svc/atlas-core-network    8004:80
+#   kubectl -n atlas-core port-forward svc/atlas-core-portal-api 8005:80
+ATLAS_IDENTITY_URL=http://localhost:8001 \
+ATLAS_EMAIL_URL=http://localhost:8002 \
+ATLAS_APPSTORE_URL=http://localhost:8003 \
+ATLAS_NETWORK_URL=http://localhost:8004 \
+ATLAS_PORTAL_API_URL=http://localhost:8005 \
+VARIFY_DATA_DIR=./data \
+npm run dev          # web on :5173 (proxies /vapi + /health to the server on :8080)
+```
+
+In-cluster, the Helm chart injects `ATLAS_NAMESPACE` and the per-service URLs;
+no configuration is needed.
+
+## Build & deploy
+
+```bash
+# Produces dist/atlas-varify-<version>.tar.zst
+scripts/build-release.sh
+
+# Sideload into the App Store
+curl -X POST https://<app-store-host>/api/v1/apps/sideload \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "tarball=@dist/atlas-varify-$(cat VERSION).tar.zst"
+```
+
+## Configuration (env)
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `ATLAS_NAMESPACE` | `atlas-core` | Namespace used to derive service DNS |
+| `ATLAS_IDENTITY_URL` … `ATLAS_PORTAL_API_URL` | in-cluster DNS | Per-service base URL overrides |
+| `PORT` | `8080` | HTTP port |
+| `VARIFY_DATA_DIR` | `/data/atlas-varify` | Plans + run history location |
+| `VARIFY_APP_KEY` | `atlas-varify` | App name used for self-registration |

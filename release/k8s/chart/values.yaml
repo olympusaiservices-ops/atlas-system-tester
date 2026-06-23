@@ -1,0 +1,32 @@
+appKey: atlas-varify
+
+images:
+  api:
+    repository: registry.local/atlas/atlas-varify-api
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+
+api:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+# Persistent volume for saved test plans + run history (/data/atlas-varify).
+storage:
+  data:
+    size: 1Gi
+    accessMode: ReadWriteOnce
+    storageClass: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+# Extra environment variables injected into the container.
+env: {}
