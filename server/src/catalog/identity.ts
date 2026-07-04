@@ -282,15 +282,20 @@ export const identitySuites: Suite[] = [
         id: 'identity.users.update',
         suite: 'identity.users',
         service: 'identity',
-        name: 'Update throwaway user',
+        name: 'Update throwaway user (name + email)',
         endpoint: 'PATCH /api/admin/users/:id',
         safety: 'write-isolated',
         auth: 'user',
         requires: ['newUserId'],
+        // Email is now an admin-editable field; change it on the throwaway user
+        // to exercise that path alongside the display name.
         req: () => ({
           method: 'PATCH',
           path: '/api/admin/users/{{newUserId}}',
-          body: { lastName: 'Updated' },
+          body: {
+            lastName: 'Updated',
+            email: `varify-user-upd-${tag()}@${DOMAIN}`,
+          },
         }),
         expect: [200],
       }),
@@ -1417,6 +1422,22 @@ export const identitySuites: Suite[] = [
         safety: 'read',
         auth: 'user',
         req: { method: 'GET', path: '/api/admin/audit', query: { limit: '5' } },
+      }),
+      def({
+        id: 'identity.settings.base-url',
+        suite: 'identity.system',
+        service: 'identity',
+        name: 'Set system base URL (M2M receiver)',
+        endpoint: 'PATCH /api/v1/settings/system-base-url',
+        // Option B receiver: portal-api fans the active proxy's public URL out to
+        // this endpoint with a config:write app token. A self-registered app is
+        // usually not granted config:write, so 403 counts as wired-but-
+        // unauthorized; an empty body avoids an actual change. system + off by default.
+        safety: 'system',
+        auth: 'app',
+        scopes: ['config:write'],
+        req: { method: 'PATCH', path: '/api/v1/settings/system-base-url', body: {} },
+        expect: [200, 204, 400, 403, 422],
       }),
     ],
   },

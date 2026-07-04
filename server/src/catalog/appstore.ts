@@ -229,6 +229,21 @@ export const appstoreSuites: Suite[] = [
         },
         expect: REACHABLE,
       }),
+      def({
+        id: 'appstore.lifecycle.sideload',
+        suite: 'appstore.lifecycle',
+        service: 'appstore',
+        name: 'Sideload package (reachability)',
+        endpoint: 'POST /api/v1/apps/sideload',
+        // Enqueues an INSTALL/UPGRADE from an uploaded/staged package. Sending an
+        // empty body carries no valid tarball, so validation rejects it (400/422)
+        // — proving route + auth + validation are wired without installing anything.
+        safety: 'system',
+        auth: 'app',
+        scopes: ['appstore:install'],
+        req: { method: 'POST', path: '/api/v1/apps/sideload', body: {} },
+        expect: REACHABLE,
+      }),
     ],
   },
 
@@ -353,6 +368,21 @@ export const appstoreSuites: Suite[] = [
         scopes: ['appstore:telemetry:configure'],
         req: { method: 'PUT', path: '/api/v1/settings', body: {} },
         expect: [200, 204, 400],
+      }),
+      def({
+        id: 'appstore.settings.base-url',
+        suite: 'appstore.settings',
+        service: 'appstore',
+        name: 'Set system base URL (M2M receiver)',
+        endpoint: 'PATCH /api/v1/settings/system-base-url',
+        // Option B cross-service receiver: sets the org-wide base URL if the app
+        // token carries config:write (usually not granted → 403). Empty body
+        // avoids an actual change while proving route + auth.
+        safety: 'system',
+        auth: 'app',
+        scopes: ['config:write'],
+        req: { method: 'PATCH', path: '/api/v1/settings/system-base-url', body: {} },
+        expect: [200, 204, 400, 403, 422],
       }),
     ],
   },

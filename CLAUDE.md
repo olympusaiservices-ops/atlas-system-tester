@@ -1,7 +1,7 @@
 # atlas-varify — notes for Claude
 
 **What this is.** An Atlas app that exercises every app-facing Atlas Core API
-endpoint (209 tests across identity / email / app-store / network / portal-api)
+endpoint (218 tests across identity / email / app-store / network / portal-api)
 and reports each call's result. It is a *test instrument*, not part of Atlas
 core — it drives the core services but never modifies them.
 

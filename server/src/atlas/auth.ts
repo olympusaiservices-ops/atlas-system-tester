@@ -28,6 +28,12 @@ export const REQUESTED_SCOPES = [
   'appstore:thirdparty:manage',
   'network:manage',
   'portal:admin',
+  // config:write authorizes the Option B cross-service base-URL receivers
+  // (PATCH /api/v1/settings/system-base-url on identity/email/app-store and
+  // PATCH /api/config/system-base-url on portal-api). A self-registered app is
+  // typically NOT granted this internal M2M scope, so those probes tolerate a
+  // 403 (wired-but-unauthorized) as reachable.
+  'config:write',
 ];
 
 export interface ConnectInput {

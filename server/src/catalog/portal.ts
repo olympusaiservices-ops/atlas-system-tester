@@ -304,6 +304,23 @@ export const portalSuites: Suite[] = [
         req: { method: 'GET', path: '/api/config/services' },
         expect: [200, 403],
       }),
+      def({
+        id: 'portal.config.base-url',
+        suite: 'portal.config',
+        service: 'portal',
+        name: 'Set system base URL (M2M authority)',
+        endpoint: 'PATCH /api/config/system-base-url',
+        // Portal-api is the canonical base-URL authority (Option B): this writes
+        // the base URL and fans it out to identity/email/app-store. It is an
+        // internal M2M route (config:write app token), normally driven by
+        // network→portal propagation. system-level + off by default; an empty
+        // body avoids an actual change, and a missing scope yields 403.
+        safety: 'system',
+        auth: 'app',
+        scopes: ['config:write'],
+        req: { method: 'PATCH', path: '/api/config/system-base-url', body: {} },
+        expect: [200, 204, 400, 403, 422],
+      }),
     ],
   },
 

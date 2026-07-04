@@ -80,15 +80,28 @@ export const networkSuites: Suite[] = [
         id: 'network.tunnels.create',
         suite: 'network.tunnels',
         service: 'network',
-        name: 'Create throwaway tunnel',
+        name: 'Create throwaway proxy (Cloudflare)',
         endpoint: 'POST /api/tunnels',
         safety: 'write-isolated',
         auth: 'app',
         scopes: ['network:manage'],
+        // A "tunnel" is now a network proxy with a provider + provider-specific
+        // config; the service derives the hostname/public URL from that config.
+        // Created inactive, so it never becomes the system base URL until it is
+        // explicitly activated (a separate, system-level step below).
         req: () => ({
           method: 'POST',
           path: '/api/tunnels',
-          body: { name: `varify-tunnel-${tag()}` },
+          body: {
+            name: `varify-tunnel-${tag()}`,
+            provider: 'cloudflare',
+            config: {
+              mode: 'token',
+              publicHostname: `varify-${tag()}.example.com`,
+              originService: 'http://localhost:8080',
+              tunnelToken: `varify-fake-${tag()}`,
+            },
+          },
         }),
         expect: [200, 201],
         capture: capId('id', 'tunnel_id')('tunnelId'),
@@ -109,16 +122,19 @@ export const networkSuites: Suite[] = [
         id: 'network.tunnels.update',
         suite: 'network.tunnels',
         service: 'network',
-        name: 'Update throwaway tunnel',
+        name: 'Update throwaway proxy (secret preserved)',
         endpoint: 'PATCH /api/tunnels/:id',
         safety: 'write-isolated',
         auth: 'app',
         scopes: ['network:manage'],
         requires: ['tunnelId'],
+        // PATCH merges provider_config over the stored config and preserves the
+        // secret when the incoming value is blank — exercise that path (blank
+        // tunnelToken keeps the one set at create) alongside a name change.
         req: () => ({
           method: 'PATCH',
           path: '/api/tunnels/{{tunnelId}}',
-          body: { name: 'varify-tunnel-upd' },
+          body: { name: 'varify-tunnel-upd', config: { tunnelToken: '' } },
         }),
         expect: [200],
       }),
@@ -126,9 +142,12 @@ export const networkSuites: Suite[] = [
         id: 'network.tunnels.activate',
         suite: 'network.tunnels',
         service: 'network',
-        name: 'Activate tunnel',
+        name: 'Activate proxy (single-active + base URL)',
         endpoint: 'POST /api/tunnels/:id/activate',
-        // Provisions the tunnel against Cloudflare — a live fabric change.
+        // Provisions the proxy against its provider AND makes its public URL the
+        // system base URL: deactivates every other proxy and fans the new base
+        // URL out to portal-api → identity/email/app-store (Option B). A live
+        // fabric + global-state change, so system-level and off by default.
         safety: 'system',
         auth: 'app',
         scopes: ['network:manage'],
@@ -588,6 +607,32 @@ export const networkSuites: Suite[] = [
         auth: 'app',
         scopes: ['network:read'],
         req: { method: 'GET', path: '/api/mesh/routes' },
+      }),
+    ],
+  },
+
+  // ───────────────────────── Stats ───────────────────────────────
+  {
+    id: 'network.stats',
+    service: 'network',
+    name: 'Network · Stats',
+    description:
+      'Aggregate network stats: per-server public/private IPs and traffic, the ' +
+      'active proxy, proxy counts, and the current system base URL.',
+    tests: [
+      def({
+        id: 'network.stats.get',
+        suite: 'network.stats',
+        service: 'network',
+        name: 'Get network stats',
+        endpoint: 'GET /api/network/stats',
+        safety: 'read',
+        auth: 'app',
+        scopes: ['network:read'],
+        req: { method: 'GET', path: '/api/network/stats' },
+        // Portal reaches this with a user session; an app token with network:read
+        // works too, but tolerate 403 if the service gates it to user JWTs only.
+        expect: [200, 403],
       }),
     ],
   },

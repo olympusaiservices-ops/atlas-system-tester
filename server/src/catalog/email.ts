@@ -660,4 +660,99 @@ export const emailSuites: Suite[] = [
       }),
     ],
   },
+
+  // ───────────────────────── Admin · Email Provider ──────────────
+  {
+    id: 'email.provider',
+    service: 'email',
+    name: 'Email · Email Provider',
+    description:
+      'Outbound delivery provider config (Mailgun/Postmark/SES/Mailchimp/Local). ' +
+      'Read masked config + local mail-server info; the PUT re-saves the current ' +
+      'config (masked secrets are preserved) and is system-level (off by default).',
+    tests: [
+      def({
+        id: 'email.provider.get',
+        suite: 'email.provider',
+        service: 'email',
+        name: 'Get email provider config',
+        endpoint: 'GET /api/v1/admin/email-provider',
+        safety: 'read',
+        auth: 'app',
+        scopes: ['admin'],
+        req: { method: 'GET', path: '/api/v1/admin/email-provider' },
+        // Capture the current { provider, config } so the PUT can round-trip it.
+        capture: (body, vars) => {
+          const data = unwrap(body);
+          if (data && typeof data === 'object') {
+            const provider = firstOf(data, 'provider');
+            if (provider !== undefined) vars.emailProvider = provider;
+            const cfg = firstOf(data, 'config');
+            if (cfg !== undefined) vars.emailProviderConfig = cfg;
+          }
+        },
+      }),
+      def({
+        id: 'email.provider.local',
+        suite: 'email.provider',
+        service: 'email',
+        name: 'Get local mail-server info',
+        endpoint: 'GET /api/v1/admin/email-provider/local',
+        safety: 'read',
+        auth: 'app',
+        scopes: ['admin'],
+        req: { method: 'GET', path: '/api/v1/admin/email-provider/local' },
+        // Local server info is only populated when the provider is self-hosted.
+        expect: [200, 404],
+      }),
+      def({
+        id: 'email.provider.put',
+        suite: 'email.provider',
+        service: 'email',
+        name: 'Update email provider config (round-trip)',
+        endpoint: 'PUT /api/v1/admin/email-provider',
+        // Re-saving the current config is a no-op (masked secrets preserved), but
+        // the provider is org-wide delivery state — opt-in only.
+        safety: 'system',
+        auth: 'app',
+        scopes: ['admin'],
+        req: (v) => ({
+          method: 'PUT',
+          path: '/api/v1/admin/email-provider',
+          body:
+            v.emailProvider !== undefined
+              ? { provider: v.emailProvider, config: v.emailProviderConfig ?? {} }
+              : {},
+        }),
+        expect: [200, 204, 400, 422],
+      }),
+    ],
+  },
+
+  // ───────────────────────── Settings (Option B) ─────────────────
+  {
+    id: 'email.settings',
+    service: 'email',
+    name: 'Email · System Settings',
+    description:
+      'The M2M system-base-URL receiver driven by network→portal propagation ' +
+      '(Option B). Needs a config:write app token; a self-registered app is ' +
+      'usually not granted it, so 403 counts as wired-but-unauthorized.',
+    tests: [
+      def({
+        id: 'email.settings.base-url',
+        suite: 'email.settings',
+        service: 'email',
+        name: 'Set system base URL (M2M receiver)',
+        endpoint: 'PATCH /api/v1/settings/system-base-url',
+        // Changes org-wide base URL if authorized; opt-in. Empty body avoids an
+        // actual change (missing base_url → 400) while proving route + auth.
+        safety: 'system',
+        auth: 'app',
+        scopes: ['config:write'],
+        req: { method: 'PATCH', path: '/api/v1/settings/system-base-url', body: {} },
+        expect: [200, 204, 400, 403, 422],
+      }),
+    ],
+  },
 ];
