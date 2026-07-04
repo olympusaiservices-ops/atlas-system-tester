@@ -28,5 +28,19 @@ service:
   port: 80
   targetPort: 8080
 
+# Headless / agent access. Lets a Claude instance drive the tester over a
+# kubectl port-forward without a browser. See docs/agent-access.md.
+agent:
+  # Bearer token guarding the /agent/* API. When empty the API is open (reachable
+  # only via port-forward / in-cluster). Set a value to require the token.
+  token: ""
+  # Admin credentials for headless auto-connect. When both are set the server
+  # signs in at startup so `POST /agent/run` works with no connect round-trip.
+  adminEmail: ""
+  adminPassword: ""
+  # Force auto-connect even if creds are supplied another way. Auto-connect is
+  # also implied whenever adminEmail + adminPassword are both set.
+  autoConnect: false
+
 # Extra environment variables injected into the container.
 env: {}

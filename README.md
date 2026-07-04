@@ -72,6 +72,28 @@ curl -X POST https://<app-store-host>/api/v1/apps/sideload \
   -F "tarball=@dist/atlas-varify-$(cat VERSION).tar.zst"
 ```
 
+## Headless / agent access
+
+Besides the browser UI, the server exposes an **`/agent` API** so a Claude
+instance (or any script) on a machine with cluster access can drive the tester
+without a browser: connect from env, **run tests and wait for the full JSON
+result**, and filter to failures — each failure carries the request sent and the
+response received. This closes a real-time loop: run tests → read failures →
+edit the Atlas **core** service → redeploy → re-run.
+
+Reach the in-cluster tester over a `kubectl port-forward`; the helper CLI wraps
+the calls:
+
+```bash
+scripts/varify-agent.sh forward &                                   # svc/atlas-varify -> localhost:8080
+scripts/varify-agent.sh info
+scripts/varify-agent.sh run --service email --safety write-isolated --failures
+```
+
+Full guide — API reference, safety levels, auth token, logs, deploy values:
+**[`docs/agent-access.md`](docs/agent-access.md)**. Repo-root
+[`CLAUDE.md`](CLAUDE.md) gives a host Claude the loop at a glance.
+
 ## Configuration (env)
 
 | Variable | Default | Purpose |
@@ -81,3 +103,6 @@ curl -X POST https://<app-store-host>/api/v1/apps/sideload \
 | `PORT` | `8080` | HTTP port |
 | `VARIFY_DATA_DIR` | `/data/atlas-varify` | Plans + run history location |
 | `VARIFY_APP_KEY` | `atlas-varify` | App name used for self-registration |
+| `VARIFY_AGENT_TOKEN` | _(unset)_ | If set, guards every `/agent/*` request (bearer token) |
+| `VARIFY_ADMIN_EMAIL` / `VARIFY_ADMIN_PASSWORD` | _(unset)_ | Admin login for headless auto-connect |
+| `VARIFY_AUTO_CONNECT` | `false` | Connect at startup (implied when both admin creds are set) |

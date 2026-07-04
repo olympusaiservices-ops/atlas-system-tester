@@ -1,13 +1,17 @@
-import Fastify from 'fastify';
+import Fastify, { type FastifyBaseLogger } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { existsSync } from 'node:fs';
-import path from 'node:path';
 import { config } from './config.js';
+import { logger } from './log.js';
 import { registerApi } from './routes/api.js';
+import { registerAgentApi } from './routes/agent.js';
+import { auth } from './atlas/auth.js';
 
 async function main() {
   const app = Fastify({
-    logger: { level: process.env.LOG_LEVEL || 'info' },
+    // Share one JSON logger with the engine so requests + run events + connect
+    // attempts land on a single stdout stream (visible via `kubectl logs`).
+    loggerInstance: logger as unknown as FastifyBaseLogger,
     bodyLimit: 5 * 1024 * 1024,
   });
 
@@ -24,6 +28,9 @@ async function main() {
   // ---- Tester API ----
   await registerApi(app);
 
+  // ---- Headless agent API (/agent) ----
+  await registerAgentApi(app);
+
   // ---- Static SPA (built web app) ----
   const webDir = config.webDir;
   if (existsSync(webDir)) {
@@ -33,6 +40,7 @@ async function main() {
       if (
         req.raw.url &&
         (req.raw.url.startsWith('/vapi') ||
+          req.raw.url.startsWith('/agent') ||
           req.raw.url.startsWith('/health'))
       ) {
         return reply.code(404).send({ error: 'not found' });
@@ -50,8 +58,38 @@ async function main() {
 
   await app.listen({ port: config.port, host: config.host });
   app.log.info(
-    `atlas-varify listening on ${config.host}:${config.port} (namespace=${config.namespace})`,
+    {
+      host: config.host,
+      port: config.port,
+      namespace: config.namespace,
+      agentAuth: Boolean(config.agentToken),
+      autoConnect: config.autoConnect,
+    },
+    'atlas-varify listening',
   );
+
+  // Best-effort headless connect at startup when admin creds are configured, so
+  // a host-side agent can run tests immediately without a connect round-trip.
+  if (config.autoConnect) {
+    auth
+      .ensureConnected()
+      .then((state) => {
+        if (state?.connected) {
+          app.log.info(
+            { userToken: state.haveUserToken, appToken: state.haveAppToken },
+            'startup auto-connect succeeded',
+          );
+        } else {
+          app.log.warn('startup auto-connect skipped: no credentials available');
+        }
+      })
+      .catch((err) =>
+        app.log.warn(
+          { err: (err as Error).message },
+          'startup auto-connect failed (will retry lazily on first run)',
+        ),
+      );
+  }
 }
 
 main().catch((err) => {

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
 
 /**
  * Runtime configuration, resolved from environment variables. In-cluster the
@@ -11,6 +12,26 @@ const ns = process.env.ATLAS_NAMESPACE || 'atlas-core';
 function svc(name: string): string {
   return `http://${name}.${ns}.svc.cluster.local`;
 }
+
+/** Best-effort read of the VERSION file so /agent/info can report a version. */
+function readVersion(): string {
+  if (process.env.VARIFY_VERSION) return process.env.VARIFY_VERSION;
+  for (const p of [
+    path.resolve(process.cwd(), 'VERSION'),
+    path.resolve(process.cwd(), '..', 'VERSION'),
+  ]) {
+    try {
+      const v = readFileSync(p, 'utf8').trim();
+      if (v) return v;
+    } catch {
+      /* not found here */
+    }
+  }
+  return '0.0.0';
+}
+
+const adminEmail = process.env.VARIFY_ADMIN_EMAIL || undefined;
+const adminPassword = process.env.VARIFY_ADMIN_PASSWORD || undefined;
 
 export interface AtlasEndpoints {
   identity: string;
@@ -45,6 +66,27 @@ export const config = {
 
   /** The app_key this tester registers itself under in Identity. */
   appKey: process.env.VARIFY_APP_KEY || 'atlas-varify',
+
+  /** Release version, for /agent/info. */
+  version: readVersion(),
+
+  // ── Headless / agent access ────────────────────────────────────────────────
+  /**
+   * Bearer token guarding the /agent/* API. When set, every /agent request must
+   * present it (Authorization: Bearer <token> or X-Varify-Token). When empty the
+   * agent API is open — safe only behind a localhost port-forward or in-cluster.
+   */
+  agentToken: process.env.VARIFY_AGENT_TOKEN || undefined,
+  /** Admin credentials used for headless auto-connect (see auth.ensureConnected). */
+  adminEmail,
+  adminPassword,
+  /**
+   * When true (or when both admin creds are present) the server connects to the
+   * cluster at startup and lazily before agent runs, without a browser.
+   */
+  autoConnect:
+    process.env.VARIFY_AUTO_CONNECT === 'true' ||
+    Boolean(adminEmail && adminPassword),
 } as const;
 
 export function endpointFor(service: keyof AtlasEndpoints): string {

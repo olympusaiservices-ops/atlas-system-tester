@@ -12,7 +12,8 @@
   "dependencies": {
     "@fastify/static": "^8.0.3",
     "fastify": "^5.2.0",
-    "jose": "^5.9.6"
+    "jose": "^5.9.6",
+    "pino": "^10.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

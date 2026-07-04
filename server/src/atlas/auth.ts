@@ -74,6 +74,7 @@ export class AuthManager {
   private userToken?: string;
   private appToken?: string;
   private refreshCookie?: string;
+  private connecting?: Promise<ConnectionState>;
   private state: ConnectionState = {
     connected: false,
     appAuth: 'auto',
@@ -109,6 +110,28 @@ export class AuthManager {
   }
   get adminEmail(): string | undefined {
     return this.state.adminEmail;
+  }
+
+  /**
+   * Headless connect used by the /agent API. If already connected, returns the
+   * current state. Otherwise, if admin credentials are configured in the
+   * environment (VARIFY_ADMIN_EMAIL / VARIFY_ADMIN_PASSWORD), connects with them.
+   * Concurrent callers share a single in-flight connect. Returns null when no
+   * credentials are available to connect with.
+   */
+  async ensureConnected(): Promise<ConnectionState | null> {
+    if (this.state.connected) return this.state;
+    if (!config.adminEmail || !config.adminPassword) return null;
+    if (!this.connecting) {
+      this.connecting = this.connect({
+        adminEmail: config.adminEmail,
+        adminPassword: config.adminPassword,
+        appAuth: 'auto',
+      }).finally(() => {
+        this.connecting = undefined;
+      });
+    }
+    return this.connecting;
   }
 
   async connect(input: ConnectInput): Promise<ConnectionState> {

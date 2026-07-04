@@ -44,6 +44,27 @@ spec:
               value: "http://atlas-core-network.{{ .Release.Namespace }}.svc.cluster.local"
             - name: ATLAS_PORTAL_API_URL
               value: "http://atlas-core-portal-api.{{ .Release.Namespace }}.svc.cluster.local"
+            # Headless agent access (all optional — absent Secret keys = feature off).
+            - name: VARIFY_AUTO_CONNECT
+              value: "{{ .Values.agent.autoConnect }}"
+            - name: VARIFY_AGENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "atlas-varify.name" . }}-agent
+                  key: VARIFY_AGENT_TOKEN
+                  optional: true
+            - name: VARIFY_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "atlas-varify.name" . }}-agent
+                  key: VARIFY_ADMIN_EMAIL
+                  optional: true
+            - name: VARIFY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "atlas-varify.name" . }}-agent
+                  key: VARIFY_ADMIN_PASSWORD
+                  optional: true
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
