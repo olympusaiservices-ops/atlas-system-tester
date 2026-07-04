@@ -30,6 +30,20 @@ MOCK_PORT="${MOCK_PORT:-3004}"
 VARIFY_SERVER_PORT="${VARIFY_SERVER_PORT:-8080}"
 VARIFY_WEB_PORT=5173   # fixed in web/vite.config.ts
 
+# Bind the Vite dev server to all interfaces so machines on the same network can
+# reach the UI. Override VARIFY_WEB_HOST=localhost to keep it host-only.
+export VARIFY_WEB_HOST="${VARIFY_WEB_HOST:-true}"
+
+# Best-effort LAN IP a same-network browser should use (source IP of the default
+# route; falls back to the first `hostname -I` address).
+lan_ip() {
+  local ip
+  ip="$(ip route get 1.1.1.1 2>/dev/null \
+        | awk '{for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit }}')"
+  [[ -z "$ip" ]] && ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+  echo "$ip"
+}
+
 RUN_DIR="$REPO/.run"
 PID_FILE="$RUN_DIR/varify.pid"
 LOG_FILE="$RUN_DIR/varify.log"
@@ -51,6 +65,9 @@ wait_for_port() {
 
 pid_alive() { [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; }
 
+echo "=================================================="
+echo "  This is the mock version of Atlas Varify"
+echo "=================================================="
 echo "Atlas Verify — mock mode"
 echo "  mock backend : http://localhost:$MOCK_PORT   (Atlas Core API Tester)"
 echo "  verify api   : http://localhost:$VARIFY_SERVER_PORT"
@@ -124,9 +141,21 @@ fi
 sleep 2
 CONN="$(curl -sS "http://localhost:$VARIFY_SERVER_PORT/vapi/connection" 2>/dev/null || true)"
 
+LAN_IP="$(lan_ip)"
+
 echo
+echo "=================================================="
+echo "  This is the mock version of Atlas Varify"
+echo "=================================================="
 echo "✅ Atlas Verify is up in mock mode (pid $(cat "$PID_FILE"))."
-echo "   UI        : http://localhost:$VARIFY_WEB_PORT   (Vite HMR — edit web/src and it hot-reloads)"
+echo "   UI (this machine) : http://localhost:$VARIFY_WEB_PORT"
+if [[ -n "$LAN_IP" ]]; then
+  echo "   UI (same network) : http://$LAN_IP:$VARIFY_WEB_PORT   ← share this address"
+else
+  echo "   UI (same network) : could not determine this machine's LAN IP;"
+  echo "                       find it with 'hostname -I' and use http://<ip>:$VARIFY_WEB_PORT"
+fi
+echo "   (Vite HMR — edit web/src and it hot-reloads)"
 echo "   API       : http://localhost:$VARIFY_SERVER_PORT/vapi"
 echo "   Log       : .run/varify.log"
 if echo "$CONN" | grep -q '"connected":true'; then
