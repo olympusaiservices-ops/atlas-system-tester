@@ -634,6 +634,20 @@ export const networkSuites: Suite[] = [
         // works too, but tolerate 403 if the service gates it to user JWTs only.
         expect: [200, 403],
       }),
+      def({
+        id: 'network.stats.base-url-propagation',
+        suite: 'network.stats',
+        service: 'network',
+        name: 'Base-URL propagation status (Option B)',
+        endpoint: 'GET /api/network/base-url-propagation',
+        // Per-service push status of the last system-base-URL fan-out
+        // (atlas-system §7.4): identity/email/app-store/portal receiver results.
+        safety: 'read',
+        auth: 'app',
+        scopes: ['network:read'],
+        req: { method: 'GET', path: '/api/network/base-url-propagation' },
+        expect: [200, 403],
+      }),
     ],
   },
 ];

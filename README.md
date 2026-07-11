@@ -8,11 +8,11 @@ It covers 200+ endpoint tests across all five core services:
 
 | Service     | K8s service            | Tests |
 |-------------|------------------------|-------|
-| Identity    | `atlas-core-identity`  | 93    |
+| Identity    | `atlas-core-identity`  | 96    |
 | Email       | `atlas-core-email`     | 39    |
-| App Store   | `atlas-core-app-store` | 27    |
-| Network     | `atlas-core-network`   | 37    |
-| Portal API  | `atlas-core-portal-api`| 22    |
+| App Store   | `atlas-core-app-store` | 30    |
+| Network     | `atlas-core-network`   | 38    |
+| Portal API  | `atlas-core-portal-api`| 26    |
 
 ## Features
 

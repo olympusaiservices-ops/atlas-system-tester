@@ -147,6 +147,20 @@ export const appstoreSuites: Suite[] = [
         scopes: ['appstore:read'],
         req: { method: 'GET', path: '/api/v1/apps/updates' },
       }),
+      def({
+        id: 'appstore.inventory.server-tarballs',
+        suite: 'appstore.inventory',
+        service: 'appstore',
+        name: 'List server-staged tarballs',
+        endpoint: 'GET /api/v1/apps/server-tarballs',
+        // Sideload source discovery (spec §6.4): tarballs staged on the app-store
+        // pod that a sideload can install from. Requires the install permission.
+        safety: 'read',
+        auth: 'app',
+        scopes: ['appstore:install'],
+        req: { method: 'GET', path: '/api/v1/apps/server-tarballs' },
+        expect: [200, 403],
+      }),
     ],
   },
 
@@ -244,6 +258,22 @@ export const appstoreSuites: Suite[] = [
         req: { method: 'POST', path: '/api/v1/apps/sideload', body: {} },
         expect: REACHABLE,
       }),
+      def({
+        id: 'appstore.lifecycle.inspect',
+        suite: 'appstore.lifecycle',
+        service: 'appstore',
+        name: 'Inspect package (reachability)',
+        endpoint: 'POST /api/v1/apps/inspect',
+        // Pre-sideload archive inspection (spec §6.4): validates a staged/uploaded
+        // package against the release-package spec. An empty body references no
+        // package, so validation rejects it (400/422) — proving route + auth +
+        // validation are wired without inspecting anything real. Non-mutating.
+        safety: 'read',
+        auth: 'app',
+        scopes: ['appstore:install'],
+        req: { method: 'POST', path: '/api/v1/apps/inspect', body: {} },
+        expect: REACHABLE,
+      }),
     ],
   },
 
@@ -335,6 +365,20 @@ export const appstoreSuites: Suite[] = [
         scopes: ['appstore:read'],
         req: { method: 'DELETE', path: '/api/v1/pins/atlas-core-identity' },
         expect: [200, 204, 404],
+      }),
+      def({
+        id: 'appstore.pins.order',
+        suite: 'appstore.pins',
+        service: 'appstore',
+        name: 'Reorder pins (persisted order)',
+        endpoint: 'PUT /api/v1/pins/order',
+        // Persists drag-and-drop pin ordering (spec §6.5/§7.8, pins.position). An
+        // empty order is a safe no-op that still exercises the write path.
+        safety: 'write-isolated',
+        auth: 'app',
+        scopes: ['appstore:read'],
+        req: { method: 'PUT', path: '/api/v1/pins/order', body: { order: [] } },
+        expect: [200, 204, 400],
       }),
     ],
   },

@@ -1,6 +1,6 @@
 import type { Suite, VarBag } from '../engine/types.js';
 import { def } from './util.js';
-import { unwrap, firstOf, assertList } from '../engine/helpers.js';
+import { unwrap, firstOf, assertList, tag } from '../engine/helpers.js';
 
 // The Portal API is the BFF that fronts the Atlas Core admin portal. It is
 // consumed with the admin user session: the admin user JWT authorizes both the
@@ -45,6 +45,74 @@ export const portalSuites: Suite[] = [
         req: { method: 'GET', path: '/health/services' },
         // 503 when one or more downstream services are degraded; still wired.
         expect: [200, 503],
+      }),
+    ],
+  },
+
+  // ───────────────────────── Auth (BFF) ──────────────────────────
+  {
+    id: 'portal.auth',
+    service: 'portal',
+    name: 'Portal · Auth (BFF)',
+    description:
+      'The portal-api auth orchestration layer (deployment-notes §8.4/§9): ' +
+      'cookie-session login/refresh fronting Identity, and the unwrapped /me.',
+    tests: [
+      def({
+        id: 'portal.auth.login-invalid',
+        suite: 'portal.auth',
+        service: 'portal',
+        name: 'Login rejects bad credentials',
+        endpoint: 'POST /api/v1/auth/login',
+        // Uses a nonexistent account so the real admin is never lockout-affected
+        // (§4.1: 5 failures locks an existing account). Proves the BFF login route
+        // fronts Identity and rejects unknown credentials without a side effect.
+        safety: 'read',
+        auth: 'none',
+        req: () => ({
+          method: 'POST',
+          path: '/api/v1/auth/login',
+          body: {
+            email: `varify-nobody-${tag()}@example.com`,
+            password: `varify-wrong-${tag()}`,
+          },
+        }),
+        expect: [400, 401],
+      }),
+      def({
+        id: 'portal.auth.me',
+        suite: 'portal.auth',
+        service: 'portal',
+        name: 'Current user (single-wrapped)',
+        endpoint: 'GET /api/v1/me',
+        // Guards against the §9.2 double-wrap regression: the profile must sit at
+        // data.email, not data.data.email. The BFF bridges the bearer token the
+        // same way it bridges the session cookie.
+        safety: 'read',
+        auth: 'user',
+        req: { method: 'GET', path: '/api/v1/me' },
+        assert: (body) => {
+          const d: any = unwrap(body);
+          if (!d || (!d.email && !d.id && !d.atlasUserId))
+            return ['profile missing email/id'];
+          if (d.data && (d.data.email || d.data.atlasUserId))
+            return ['response is double-wrapped ({data:{data:{…}}}) — see §9.2'];
+          return [];
+        },
+      }),
+      def({
+        id: 'portal.auth.refresh',
+        suite: 'portal.auth',
+        service: 'portal',
+        name: 'Refresh without a session',
+        endpoint: 'POST /api/v1/auth/refresh',
+        // No refresh cookie is presented, so the route replies 401/400; this only
+        // proves it is wired (a real refresh needs the httpOnly identity_refresh
+        // cookie the browser flow sets).
+        safety: 'read',
+        auth: 'none',
+        req: { method: 'POST', path: '/api/v1/auth/refresh', body: {} },
+        expect: [200, 400, 401],
       }),
     ],
   },
@@ -241,6 +309,18 @@ export const portalSuites: Suite[] = [
         safety: 'write-isolated',
         auth: 'user',
         req: { method: 'POST', path: '/api/notifications/mark-all-read', body: {} },
+        expect: [200, 204],
+      }),
+      def({
+        id: 'portal.notifications.read-all',
+        suite: 'portal.notifications',
+        service: 'portal',
+        name: 'Mark all read (PATCH alias)',
+        endpoint: 'PATCH /api/notifications/read-all',
+        // PATCH sibling of mark-all-read (both clear the unread state). Idempotent.
+        safety: 'write-isolated',
+        auth: 'user',
+        req: { method: 'PATCH', path: '/api/notifications/read-all', body: {} },
         expect: [200, 204],
       }),
       def({

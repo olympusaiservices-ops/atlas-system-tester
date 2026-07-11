@@ -25,6 +25,38 @@ const capId =
 const EXTERNAL_REACHABLE = [...REACHABLE, 500, 502, 503, 504];
 
 export const identitySuites: Suite[] = [
+  // ───────────────────────── Health ──────────────────────────────
+  {
+    id: 'identity.health',
+    service: 'identity',
+    name: 'Identity · Health',
+    description: 'Unauthenticated liveness/readiness probes (spec §11.4).',
+    tests: [
+      def({
+        id: 'identity.health.live',
+        suite: 'identity.health',
+        service: 'identity',
+        name: 'Service liveness',
+        endpoint: 'GET /health/live',
+        safety: 'read',
+        auth: 'none',
+        req: { method: 'GET', path: '/health/live' },
+      }),
+      def({
+        id: 'identity.health.ready',
+        suite: 'identity.health',
+        service: 'identity',
+        name: 'Service readiness',
+        endpoint: 'GET /health/ready',
+        safety: 'read',
+        auth: 'none',
+        // 503 when the DB is not yet reachable; the probe itself is still wired.
+        req: { method: 'GET', path: '/health/ready' },
+        expect: [200, 503],
+      }),
+    ],
+  },
+
   // ───────────────────────── Public auth ─────────────────────────
   {
     id: 'identity.public',
@@ -223,6 +255,29 @@ export const identitySuites: Suite[] = [
         auth: 'user',
         req: { method: 'POST', path: '/api/me/mfa/totp/disable' },
         expect: [200, 204, 400, 404],
+      }),
+      def({
+        id: 'identity.me.change-password',
+        suite: 'identity.me',
+        service: 'identity',
+        name: 'Change own password (wrong current → rejected)',
+        endpoint: 'POST /api/auth/change-password',
+        // Self-service password change (deployment-notes §8.5). Deliberately sends
+        // a WRONG currentPassword (and a throwaway newPassword) so the admin's real
+        // password is never altered — the service verifies currentPassword and
+        // rejects (401/400/422). Proves the route + auth + validation are wired
+        // without any state change, so it stays read-safe like mfa-verify above.
+        safety: 'read',
+        auth: 'user',
+        req: () => ({
+          method: 'POST',
+          path: '/api/auth/change-password',
+          body: {
+            currentPassword: `varify-wrong-${tag()}`,
+            newPassword: `Varify-Wrong-${tag()}-9!`,
+          },
+        }),
+        expect: [400, 401, 422],
       }),
     ],
   },
