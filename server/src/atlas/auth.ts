@@ -273,9 +273,15 @@ export class AuthManager {
       path: '/api/admin/apps',
       token: this.userToken,
       body: {
+        // CreateAppDto is camelCase and rejects unknown properties; `loginModes`
+        // (not `login_modes`) is the field name. Grant the app the `admin`
+        // superscope so the minted M2M token can exercise every app-scoped test
+        // (the scopes guard treats `admin` as a wildcard); without a scope grant
+        // the token carries none and every auth:'app' test 403s.
         name: config.appKey,
         description: 'Atlas Verify — automated core API tester',
-        login_modes: [],
+        loginModes: [],
+        scopes: ['admin'],
       },
     });
 

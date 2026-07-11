@@ -316,7 +316,7 @@ export const identitySuites: Suite[] = [
             password: 'Sup3r$ecret!1',
             firstName: 'Varify',
             lastName: 'User',
-            org_roles: ['USER'],
+            orgRoles: ['USER'],
           },
         }),
         expect: [200, 201],
@@ -424,10 +424,10 @@ export const identitySuites: Suite[] = [
         endpoint: 'POST /api/admin/users:import',
         safety: 'write-isolated',
         auth: 'user',
-        // The endpoint expects multipart/form-data; sending JSON proves the
-        // route + auth are wired (expected 400/415 on format).
+        // Accepts a JSON { rows: [...] } batch; an empty batch is a valid no-op
+        // import (201 Created). Also tolerate other success/validation codes.
         req: { method: 'POST', path: '/api/admin/users:import', body: { rows: [] } },
-        expect: [200, 202, 400, 415, 422],
+        expect: [200, 201, 202, 400, 415, 422],
       }),
       def({
         id: 'identity.users.soft-delete',
@@ -487,7 +487,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/admin/groups',
-          body: { name: `varify-group-${tag()}`, description: 'Varify probe group' },
+          body: { name: `varify-group-${tag()}` },
         }),
         expect: [200, 201],
         capture: capId('id', 'group_id', 'groupId')('newGroupId'),
@@ -648,7 +648,6 @@ export const identitySuites: Suite[] = [
           body: {
             name: `varify-probe-${tag()}`,
             description: 'Varify probe app',
-            login_modes: [],
           },
         }),
         expect: [200, 201],
@@ -867,7 +866,7 @@ export const identitySuites: Suite[] = [
           path: '/api/admin/app-role-templates',
           body: {
             name: `varify-tmpl-${tag()}`,
-            roles: [{ name: 'viewer', permissions: ['varify:read'] }],
+            definition: [{ roleName: 'viewer', permissions: ['varify:read'] }],
           },
         }),
         expect: [200, 201],
@@ -1287,8 +1286,8 @@ export const identitySuites: Suite[] = [
           path: '/api/admin/email-templates/varify-probe',
           body: {
             subject: 'Varify probe',
-            html_body: '<p>Hello {{name}}</p>',
-            text_body: 'Hello {{name}}',
+            htmlBody: '<p>Hello {{name}}</p>',
+            textBody: 'Hello {{name}}',
           },
         }),
         expect: [200, 201],
@@ -1351,8 +1350,8 @@ export const identitySuites: Suite[] = [
           path: '/api/admin/invites',
           body: {
             email: `varify-invite-${tag()}@${DOMAIN}`,
-            org_roles: ['USER'],
-            group_ids: [],
+            orgRoles: ['USER'],
+            groupIds: [],
           },
         }),
         expect: [200, 201],

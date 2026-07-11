@@ -53,6 +53,10 @@ export function assertEnvelope(body: unknown): string[] {
 /** Assert the unwrapped payload is an array (list endpoints). */
 export function assertList(body: unknown): string[] {
   const data = unwrap(body);
-  if (!Array.isArray(data)) return ['expected a list payload (array under "data")'];
-  return [];
+  if (Array.isArray(data)) return [];
+  // Some list endpoints paginate under "items" instead of the {data:[…]}
+  // envelope (e.g. Identity GET /api/admin/users) — accept that shape too.
+  const items = (data as any)?.items ?? (body as any)?.items;
+  if (Array.isArray(items)) return [];
+  return ['expected a list payload (array under "data" or "items")'];
 }
