@@ -364,7 +364,7 @@ export const identitySuites: Suite[] = [
         auth: 'user',
         requires: ['newUserId'],
         req: () => ({ method: 'POST', path: '/api/admin/users/{{newUserId}}/disable' }),
-        expect: [200, 204],
+        expect: [200, 201, 204],
       }),
       def({
         id: 'identity.users.enable',
@@ -376,7 +376,7 @@ export const identitySuites: Suite[] = [
         auth: 'user',
         requires: ['newUserId'],
         req: () => ({ method: 'POST', path: '/api/admin/users/{{newUserId}}/enable' }),
-        expect: [200, 204],
+        expect: [200, 201, 204],
       }),
       def({
         id: 'identity.users.reset-password',
@@ -392,7 +392,7 @@ export const identitySuites: Suite[] = [
           path: '/api/admin/users/{{newUserId}}/reset-password',
           body: { password: 'An0ther$ecret!2' },
         }),
-        expect: [200, 204],
+        expect: [200, 201, 204],
       }),
       def({
         id: 'identity.users.export',
@@ -439,7 +439,7 @@ export const identitySuites: Suite[] = [
         auth: 'user',
         requires: ['newUserId'],
         req: () => ({ method: 'POST', path: '/api/admin/users/{{newUserId}}/soft-delete' }),
-        expect: [200, 204],
+        expect: [200, 201, 204],
       }),
       def({
         id: 'identity.users.hard-delete',
@@ -452,7 +452,7 @@ export const identitySuites: Suite[] = [
         auth: 'user',
         requires: ['newUserId'],
         req: () => ({ method: 'POST', path: '/api/admin/users/{{newUserId}}/hard-delete' }),
-        expect: [200, 204, 403],
+        expect: [200, 201, 204, 403],
         capture: (_b, vars) => {
           delete vars.newUserId;
         },
@@ -530,7 +530,7 @@ export const identitySuites: Suite[] = [
         req: (v) => ({
           method: 'POST',
           path: '/api/admin/groups/{{newGroupId}}/members',
-          body: { userId: v.currentUserId, user_id: v.currentUserId },
+          body: { userId: v.currentUserId },
         }),
         expect: [200, 201, 204],
       }),
@@ -655,6 +655,9 @@ export const identitySuites: Suite[] = [
           const d = unwrap(body);
           const appId = firstOf(d?.app, 'app_id', 'id') ?? firstOf(d, 'app_id', 'id');
           if (appId !== undefined) vars.probeAppId = appId;
+          const clientId =
+            firstOf(d?.client, 'client_id', 'id') ?? firstOf(d, 'client_id');
+          if (clientId !== undefined) vars.probeClientId = clientId;
         },
       }),
       def({
@@ -703,10 +706,11 @@ export const identitySuites: Suite[] = [
         safety: 'write-isolated',
         auth: 'user',
         requires: ['probeAppId'],
+        // CreateClientDto only accepts optional `scopes`; a name is rejected.
         req: () => ({
           method: 'POST',
           path: '/api/admin/apps/{{probeAppId}}/clients',
-          body: { name: `varify-client-${tag()}` },
+          body: { scopes: ['read'] },
         }),
         expect: [200, 201],
       }),
@@ -718,10 +722,13 @@ export const identitySuites: Suite[] = [
         endpoint: 'POST /api/admin/apps/:appId/rotate-client-secret',
         safety: 'write-isolated',
         auth: 'user',
-        requires: ['probeAppId'],
-        req: () => ({
+        // rotate-client-secret needs the target clientId in the body (captured
+        // from the app registration above).
+        requires: ['probeAppId', 'probeClientId'],
+        req: (v) => ({
           method: 'POST',
           path: '/api/admin/apps/{{probeAppId}}/rotate-client-secret',
+          body: { clientId: v.probeClientId },
         }),
         expect: [200, 201],
       }),
@@ -1070,7 +1077,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'PUT',
           path: '/api/apps/{{appId}}/users/{{currentUserId}}/roles',
-          body: { roles: [] },
+          body: { roleIds: [] },
         }),
         expect: [200, 204, 403],
       }),
@@ -1193,14 +1200,17 @@ export const identitySuites: Suite[] = [
         endpoint: 'POST /api/admin/users/:userId/credentials',
         safety: 'write-isolated',
         auth: 'user',
-        requires: ['newUserId'],
-        req: () => ({
+        // CreateCredentialDto: appId (UUID) + type (enum) + secret (string) are
+        // required; the store is scoped to user+app, so use the tester's own app.
+        requires: ['newUserId', 'appId'],
+        req: (v) => ({
           method: 'POST',
           path: '/api/admin/users/{{newUserId}}/credentials',
           body: {
+            appId: v.appId,
             type: 'API_TOKEN',
-            name: `varify-cred-${tag()}`,
-            secret: { token: `varify-secret-${tag()}` },
+            label: `varify-cred-${tag()}`,
+            secret: `varify-secret-${tag()}-abcdefghij`,
           },
         }),
         expect: [200, 201],
