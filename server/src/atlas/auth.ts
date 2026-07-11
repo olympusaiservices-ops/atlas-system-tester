@@ -329,17 +329,31 @@ export class AuthManager {
       );
     }
     const appId = mine.app_id || mine.id;
+    // Look up the app's client id — rotate-client-secret requires it in the body
+    // (a bodyless POST resolves no client and returns no secret).
+    const clientsRes = await send({
+      service: 'identity',
+      method: 'GET',
+      path: `/api/admin/apps/${appId}/clients`,
+      token: this.userToken,
+    });
+    const clients = unwrap(clientsRes.body);
+    const clientId = Array.isArray(clients)
+      ? clients[0]?.client_id
+      : mine?.client_id || mine?.clients?.[0]?.client_id;
+    if (!clientId) {
+      throw new Error('Found existing app but it has no client to rotate.');
+    }
     const rotate = await send({
       service: 'identity',
       method: 'POST',
       path: `/api/admin/apps/${appId}/rotate-client-secret`,
       token: this.userToken,
+      body: { clientId },
     });
     const rdata = unwrap(rotate.body);
-    const clientId =
-      rdata?.client_id || mine?.client_id || mine?.clients?.[0]?.client_id;
     const clientSecret = rdata?.client_secret;
-    if (!clientId || !clientSecret) {
+    if (!clientSecret) {
       throw new Error('Found existing app but could not obtain a client secret.');
     }
     const creds = { appId, clientId, clientSecret };
