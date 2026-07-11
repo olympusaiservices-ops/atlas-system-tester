@@ -36,6 +36,17 @@ export const REQUESTED_SCOPES = [
   'config:write',
 ];
 
+/**
+ * Scopes the tester's own app is registered with AND mints its M2M token for.
+ * Identity's token endpoint rejects the whole request if any requested scope
+ * exceeds the grant, so the grant and the mint must match exactly. `admin` is a
+ * superscope every service's guard treats as a wildcard, so it authorizes every
+ * app-scoped test on its own — keeping this to `admin` avoids per-scope grant
+ * drift. (REQUESTED_SCOPES above documents the individual scopes each suite
+ * exercises, for the UI.)
+ */
+export const APP_TOKEN_SCOPES = ['admin'];
+
 export interface ConnectInput {
   adminEmail: string;
   adminPassword: string;
@@ -281,7 +292,7 @@ export class AuthManager {
         name: config.appKey,
         description: 'Atlas Verify — automated core API tester',
         loginModes: [],
-        scopes: ['admin'],
+        scopes: APP_TOKEN_SCOPES,
       },
     });
 
@@ -340,6 +351,12 @@ export class AuthManager {
   private async mintAppToken(
     creds: CachedAppCreds,
   ): Promise<{ token?: string; scopes?: string[] }> {
+    // Identity's token endpoint is strict: it rejects the WHOLE request if any
+    // requested scope exceeds the app's grant (APP_SCOPE_INVALID). The app is
+    // registered with the `admin` superscope (see provisionApp), so mint exactly
+    // that — a token carrying `admin` passes every service's scopes guard, which
+    // treats `admin` as a wildcard. Requesting the full REQUESTED_SCOPES list here
+    // would fail unless every one were individually granted.
     const res = await send({
       service: 'identity',
       method: 'POST',
@@ -347,14 +364,14 @@ export class AuthManager {
       body: {
         clientId: creds.clientId,
         clientSecret: creds.clientSecret,
-        scopes: REQUESTED_SCOPES,
+        scopes: APP_TOKEN_SCOPES,
       },
     });
     if (!res.ok) return {};
     const data = unwrap(res.body);
     return {
       token: data?.accessToken || data?.access_token,
-      scopes: data?.scopes || REQUESTED_SCOPES,
+      scopes: data?.scopes || APP_TOKEN_SCOPES,
     };
   }
 
