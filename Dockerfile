@@ -18,8 +18,8 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=8080 \
     HOST=0.0.0.0 \
-    VARIFY_WEB_DIR=/app/web/dist \
-    VARIFY_DATA_DIR=/data/atlas-varify
+    VERIFY_WEB_DIR=/app/web/dist \
+    VERIFY_DATA_DIR=/data/atlas-verify
 
 # Production-only dependencies for the server (fastify, @fastify/static, jose).
 COPY server/package.json ./server/package.json
@@ -30,9 +30,9 @@ COPY --from=builder /build/server/dist ./server/dist
 COPY --from=builder /build/web/dist ./web/dist
 
 # Run as non-root; the data dir is a mounted volume.
-RUN mkdir -p /data/atlas-varify \
+RUN mkdir -p /data/atlas-verify \
  && addgroup -S atlas && adduser -S atlas -G atlas \
- && chown -R atlas:atlas /app /data/atlas-varify
+ && chown -R atlas:atlas /app /data/atlas-verify
 USER atlas
 
 EXPOSE 8080

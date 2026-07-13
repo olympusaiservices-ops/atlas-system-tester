@@ -93,13 +93,13 @@ export const networkSuites: Suite[] = [
           method: 'POST',
           path: '/api/tunnels',
           body: {
-            name: `varify-tunnel-${tag()}`,
+            name: `verify-tunnel-${tag()}`,
             provider: 'cloudflare',
             config: {
               mode: 'token',
-              publicHostname: `varify-${tag()}.example.com`,
+              publicHostname: `verify-${tag()}.example.com`,
               originService: 'http://localhost:8080',
-              tunnelToken: `varify-fake-${tag()}`,
+              tunnelToken: `verify-fake-${tag()}`,
             },
           },
         }),
@@ -134,7 +134,7 @@ export const networkSuites: Suite[] = [
         req: () => ({
           method: 'PATCH',
           path: '/api/tunnels/{{tunnelId}}',
-          body: { name: 'varify-tunnel-upd', config: { tunnelToken: '' } },
+          body: { name: 'verify-tunnel-upd', config: { tunnelToken: '' } },
         }),
         expect: [200],
       }),
@@ -239,8 +239,8 @@ export const networkSuites: Suite[] = [
           path: '/api/dns/zones/{{zoneId}}/records',
           body: {
             type: 'TXT',
-            name: `varify-${tag()}`,
-            content: 'varify-probe',
+            name: `verify-${tag()}`,
+            content: 'verify-probe',
             ttl: 300,
           },
         }),
@@ -260,7 +260,7 @@ export const networkSuites: Suite[] = [
         req: () => ({
           method: 'PATCH',
           path: '/api/dns/zones/{{zoneId}}/records/{{recordId}}',
-          body: { content: 'varify-updated' },
+          body: { content: 'verify-updated' },
         }),
         expect: [200],
       }),
@@ -398,7 +398,7 @@ export const networkSuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/vpn/peers',
-          body: { name: `varify-peer-${tag()}` },
+          body: { name: `verify-peer-${tag()}` },
         }),
         expect: [200, 201],
         capture: capId('id', 'peer_id')('peerId'),
@@ -428,7 +428,7 @@ export const networkSuites: Suite[] = [
         req: () => ({
           method: 'PATCH',
           path: '/api/vpn/peers/{{peerId}}',
-          body: { name: 'varify-peer-upd' },
+          body: { name: 'verify-peer-upd' },
         }),
         expect: [200],
       }),
@@ -522,7 +522,7 @@ export const networkSuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/mesh/sites',
-          body: { name: `varify-site-${tag()}` },
+          body: { name: `verify-site-${tag()}` },
         }),
         expect: [200, 201],
         capture: capId('id', 'site_id')('meshSiteId'),
@@ -552,7 +552,7 @@ export const networkSuites: Suite[] = [
         req: () => ({
           method: 'PATCH',
           path: '/api/mesh/sites/{{meshSiteId}}',
-          body: { name: 'varify-site-upd' },
+          body: { name: 'verify-site-upd' },
         }),
         expect: [200],
       }),

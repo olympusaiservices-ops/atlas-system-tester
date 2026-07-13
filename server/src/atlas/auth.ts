@@ -132,7 +132,7 @@ export class AuthManager {
   /**
    * Headless connect used by the /agent API. If already connected, returns the
    * current state. Otherwise, if admin credentials are configured in the
-   * environment (VARIFY_ADMIN_EMAIL / VARIFY_ADMIN_PASSWORD), connects with them.
+   * environment (VERIFY_ADMIN_EMAIL / VERIFY_ADMIN_PASSWORD), connects with them.
    * Concurrent callers share a single in-flight connect. Returns null when no
    * credentials are available to connect with.
    */

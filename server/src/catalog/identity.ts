@@ -10,7 +10,7 @@ import {
 
 // Throwaway resource namespace. Nothing here touches pre-existing data; every
 // write-isolated flow creates its own resource and deletes it again.
-const DOMAIN = 'varify.test';
+const DOMAIN = 'verify.test';
 const capId =
   (...keys: string[]) =>
   (varName: string) =>
@@ -120,7 +120,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/auth/recover',
-          body: { email: `varify-nobody-${tag()}@${DOMAIN}` },
+          body: { email: `verify-nobody-${tag()}@${DOMAIN}` },
         }),
         // Recovery is intentionally non-enumerating: unknown address still 2xx.
         expect: [200, 202, 204],
@@ -167,9 +167,9 @@ export const identitySuites: Suite[] = [
           method: 'POST',
           path: '/api/auth/register',
           body: {
-            email: `varify-reg-${tag()}@${DOMAIN}`,
+            email: `verify-reg-${tag()}@${DOMAIN}`,
             password: 'Sup3r$ecret!1',
-            firstName: 'Varify',
+            firstName: 'Verify',
             lastName: 'Probe',
           },
         }),
@@ -273,8 +273,8 @@ export const identitySuites: Suite[] = [
           method: 'POST',
           path: '/api/auth/change-password',
           body: {
-            currentPassword: `varify-wrong-${tag()}`,
-            newPassword: `Varify-Wrong-${tag()}-9!`,
+            currentPassword: `verify-wrong-${tag()}`,
+            newPassword: `Verify-Wrong-${tag()}-9!`,
           },
         }),
         expect: [400, 401, 422],
@@ -312,9 +312,9 @@ export const identitySuites: Suite[] = [
           method: 'POST',
           path: '/api/admin/users',
           body: {
-            email: `varify-user-${tag()}@${DOMAIN}`,
+            email: `verify-user-${tag()}@${DOMAIN}`,
             password: 'Sup3r$ecret!1',
-            firstName: 'Varify',
+            firstName: 'Verify',
             lastName: 'User',
             orgRoles: ['USER'],
           },
@@ -349,7 +349,7 @@ export const identitySuites: Suite[] = [
           path: '/api/admin/users/{{newUserId}}',
           body: {
             lastName: 'Updated',
-            email: `varify-user-upd-${tag()}@${DOMAIN}`,
+            email: `verify-user-upd-${tag()}@${DOMAIN}`,
           },
         }),
         expect: [200],
@@ -487,7 +487,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/admin/groups',
-          body: { name: `varify-group-${tag()}` },
+          body: { name: `verify-group-${tag()}` },
         }),
         expect: [200, 201],
         capture: capId('id', 'group_id', 'groupId')('newGroupId'),
@@ -646,8 +646,8 @@ export const identitySuites: Suite[] = [
           method: 'POST',
           path: '/api/admin/apps',
           body: {
-            name: `varify-probe-${tag()}`,
-            description: 'Varify probe app',
+            name: `verify-probe-${tag()}`,
+            description: 'Verify probe app',
           },
         }),
         expect: [200, 201],
@@ -683,7 +683,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'PATCH',
           path: '/api/admin/apps/{{probeAppId}}',
-          body: { description: 'Updated by Varify' },
+          body: { description: 'Updated by Verify' },
         }),
       }),
       def({
@@ -745,7 +745,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/admin/apps/{{probeAppId}}/permissions',
-          body: { permission: 'varify:read', description: 'probe perm' },
+          body: { permission: 'verify:read', description: 'probe perm' },
         }),
         expect: [200, 201],
         capture: capId('id', 'permission_id', 'permId')('probePermId'),
@@ -816,7 +816,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'PUT',
           path: '/api/admin/apps/{{probeAppId}}/roles/{{probeRoleId}}/permissions',
-          body: { permissions: ['varify:read'] },
+          body: { permissions: ['verify:read'] },
         }),
         expect: [200, 204],
       }),
@@ -872,8 +872,8 @@ export const identitySuites: Suite[] = [
           method: 'POST',
           path: '/api/admin/app-role-templates',
           body: {
-            name: `varify-tmpl-${tag()}`,
-            definition: [{ roleName: 'viewer', permissions: ['varify:read'] }],
+            name: `verify-tmpl-${tag()}`,
+            definition: [{ roleName: 'viewer', permissions: ['verify:read'] }],
           },
         }),
         expect: [200, 201],
@@ -1045,7 +1045,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/apps/{{appId}}/permissions',
-          body: { permission: `varify:probe:${tag()}`, description: 'probe' },
+          body: { permission: `verify:probe:${tag()}`, description: 'probe' },
         }),
         expect: [200, 201, 403],
       }),
@@ -1209,8 +1209,8 @@ export const identitySuites: Suite[] = [
           body: {
             appId: v.appId,
             type: 'API_TOKEN',
-            label: `varify-cred-${tag()}`,
-            secret: `varify-secret-${tag()}-abcdefghij`,
+            label: `verify-cred-${tag()}`,
+            secret: `verify-secret-${tag()}-abcdefghij`,
           },
         }),
         expect: [200, 201],
@@ -1228,7 +1228,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'PATCH',
           path: '/api/admin/credentials/{{newCredId}}',
-          body: { name: 'varify-cred-updated' },
+          body: { name: 'verify-cred-updated' },
         }),
       }),
       def({
@@ -1243,7 +1243,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/admin/credentials/{{newCredId}}/rotate',
-          body: { secret: { token: `varify-secret-${tag()}` } },
+          body: { secret: { token: `verify-secret-${tag()}` } },
         }),
         expect: [200, 201],
       }),
@@ -1260,7 +1260,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/admin/credentials/{{newCredId}}/break-glass-reveal',
-          body: { reason: 'varify verification probe' },
+          body: { reason: 'verify verification probe' },
         }),
         expect: [200, 403],
       }),
@@ -1293,9 +1293,9 @@ export const identitySuites: Suite[] = [
         auth: 'user',
         req: () => ({
           method: 'PUT',
-          path: '/api/admin/email-templates/varify-probe',
+          path: '/api/admin/email-templates/verify-probe',
           body: {
-            subject: 'Varify probe',
+            subject: 'Verify probe',
             htmlBody: '<p>Hello {{name}}</p>',
             textBody: 'Hello {{name}}',
           },
@@ -1310,7 +1310,7 @@ export const identitySuites: Suite[] = [
         endpoint: 'GET /api/admin/email-templates/:templateKey',
         safety: 'read',
         auth: 'user',
-        req: { method: 'GET', path: '/api/admin/email-templates/varify-probe' },
+        req: { method: 'GET', path: '/api/admin/email-templates/verify-probe' },
         expect: [200, 404],
       }),
       def({
@@ -1323,8 +1323,8 @@ export const identitySuites: Suite[] = [
         auth: 'user',
         req: {
           method: 'POST',
-          path: '/api/admin/email-templates/varify-probe:preview',
-          body: { variables: { name: 'Varify' } },
+          path: '/api/admin/email-templates/verify-probe:preview',
+          body: { variables: { name: 'Verify' } },
         },
         expect: [200, 400, 404],
       }),
@@ -1359,7 +1359,7 @@ export const identitySuites: Suite[] = [
           method: 'POST',
           path: '/api/admin/invites',
           body: {
-            email: `varify-invite-${tag()}@${DOMAIN}`,
+            email: `verify-invite-${tag()}@${DOMAIN}`,
             orgRoles: ['USER'],
             groupIds: [],
           },

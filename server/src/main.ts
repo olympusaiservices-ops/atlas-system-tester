@@ -50,7 +50,7 @@ async function main() {
   } else {
     app.log.warn(`Web build not found at ${webDir}; UI will be unavailable.`);
     app.get('/', async () => ({
-      app: 'atlas-varify',
+      app: 'atlas-verify',
       message: 'API is up; web UI build was not found.',
       api: '/vapi/catalog',
     }));
@@ -65,7 +65,7 @@ async function main() {
       agentAuth: Boolean(config.agentToken),
       autoConnect: config.autoConnect,
     },
-    'atlas-varify listening',
+    'atlas-verify listening',
   );
 
   // Best-effort headless connect at startup when admin creds are configured, so

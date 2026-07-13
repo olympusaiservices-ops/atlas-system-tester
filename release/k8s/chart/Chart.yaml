@@ -1,5 +1,5 @@
 apiVersion: v2
-name: atlas-varify
+name: atlas-verify
 description: Atlas Verify — exercises every app-facing Atlas Core API endpoint with a UI
 type: application
 version: 0.1.0

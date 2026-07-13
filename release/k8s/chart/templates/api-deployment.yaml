@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "atlas-varify.name" . }}
+  name: {{ include "atlas-verify.name" . }}
   labels:
-    {{- include "atlas-varify.labels" . | nindent 4 }}
+    {{- include "atlas-verify.labels" . | nindent 4 }}
     app.kubernetes.io/component: api
 spec:
   replicas: {{ .Values.api.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "atlas-varify.name" . }}
+      app: {{ include "atlas-verify.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "atlas-varify.name" . }}
+        app: {{ include "atlas-verify.name" . }}
         app.kubernetes.io/component: api
     spec:
       containers:
@@ -31,8 +31,8 @@ spec:
               value: "{{ .Release.Namespace }}"
             - name: PORT
               value: "{{ .Values.service.targetPort }}"
-            - name: VARIFY_DATA_DIR
-              value: "/data/atlas-varify"
+            - name: VERIFY_DATA_DIR
+              value: "/data/atlas-verify"
             # Explicit per-service overrides (constructed here, not in values.yaml).
             - name: ATLAS_IDENTITY_URL
               value: "http://atlas-core-identity.{{ .Release.Namespace }}.svc.cluster.local"
@@ -45,25 +45,25 @@ spec:
             - name: ATLAS_PORTAL_API_URL
               value: "http://atlas-core-portal-api.{{ .Release.Namespace }}.svc.cluster.local"
             # Headless agent access (all optional — absent Secret keys = feature off).
-            - name: VARIFY_AUTO_CONNECT
+            - name: VERIFY_AUTO_CONNECT
               value: "{{ .Values.agent.autoConnect }}"
-            - name: VARIFY_AGENT_TOKEN
+            - name: VERIFY_AGENT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "atlas-varify.name" . }}-agent
-                  key: VARIFY_AGENT_TOKEN
+                  name: {{ include "atlas-verify.name" . }}-agent
+                  key: VERIFY_AGENT_TOKEN
                   optional: true
-            - name: VARIFY_ADMIN_EMAIL
+            - name: VERIFY_ADMIN_EMAIL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "atlas-varify.name" . }}-agent
-                  key: VARIFY_ADMIN_EMAIL
+                  name: {{ include "atlas-verify.name" . }}-agent
+                  key: VERIFY_ADMIN_EMAIL
                   optional: true
-            - name: VARIFY_ADMIN_PASSWORD
+            - name: VERIFY_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "atlas-varify.name" . }}-agent
-                  key: VARIFY_ADMIN_PASSWORD
+                  name: {{ include "atlas-verify.name" . }}-agent
+                  key: VERIFY_ADMIN_PASSWORD
                   optional: true
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
@@ -73,7 +73,7 @@ spec:
             {{- toYaml .Values.api.resources | nindent 12 }}
           volumeMounts:
             - name: data
-              mountPath: /data/atlas-varify
+              mountPath: /data/atlas-verify
           livenessProbe:
             httpGet:
               path: /health/live
@@ -89,4 +89,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: {{ include "atlas-varify.name" . }}-data
+            claimName: {{ include "atlas-verify.name" . }}-data

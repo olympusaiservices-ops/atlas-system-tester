@@ -25,7 +25,7 @@ const capId =
 // Clearly-nonexistent app key. Targeting this proves the install/upgrade/
 // uninstall routes are wired (auth + queueing) without deploying a real app;
 // the cluster state is never altered.
-const NONEXISTENT_APP = 'varify-nonexistent-app';
+const NONEXISTENT_APP = 'verify-nonexistent-app';
 
 export const appstoreSuites: Suite[] = [
   // ───────────────────────── Health ──────────────────────────────
@@ -515,7 +515,7 @@ export const appstoreSuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/v1/thirdparty',
-          body: { name: `varify-tp-${tag()}`, url: 'https://example.com' },
+          body: { name: `verify-tp-${tag()}`, url: 'https://example.com' },
         }),
         expect: [200, 201],
         capture: capId('id', 'thirdparty_id')('thirdPartyId'),

@@ -4,10 +4,10 @@ import react from '@vitejs/plugin-react';
 // Build outputs to web/dist, which the server serves as static files.
 // During `vite dev`, proxy the tester API + SSE + health to the backend.
 //
-// VARIFY_WEB_HOST controls the dev-server bind address: unset → localhost only
+// VERIFY_WEB_HOST controls the dev-server bind address: unset → localhost only
 // (default); "true" → all interfaces (0.0.0.0), so other machines on the LAN can
 // reach the UI; or an explicit IP/hostname to bind. run-mock.sh sets "true".
-const webHostEnv = process.env.VARIFY_WEB_HOST;
+const webHostEnv = process.env.VERIFY_WEB_HOST;
 const webHost = webHostEnv === 'true' ? true : webHostEnv || 'localhost';
 
 export default defineConfig({
@@ -21,11 +21,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/vapi': {
-        target: process.env.VARIFY_API_TARGET || 'http://localhost:8080',
+        target: process.env.VERIFY_API_TARGET || 'http://localhost:8080',
         changeOrigin: true,
       },
       '/health': {
-        target: process.env.VARIFY_API_TARGET || 'http://localhost:8080',
+        target: process.env.VERIFY_API_TARGET || 'http://localhost:8080',
         changeOrigin: true,
       },
     },

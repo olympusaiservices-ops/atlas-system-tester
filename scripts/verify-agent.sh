@@ -1,31 +1,31 @@
 #!/usr/bin/env bash
 #
-# varify-agent.sh — drive the atlas-varify tester headlessly from this host.
+# verify-agent.sh — drive the atlas-verify tester headlessly from this host.
 #
 # Intended for a Claude instance (or a human) on a machine with kubectl access
 # to the atlas-core cluster. It talks to the tester's /agent API over a local
 # kubectl port-forward, so the tester can run in-cluster while you drive it here.
 #
 # Typical loop:
-#   scripts/varify-agent.sh forward &          # port-forward svc/atlas-varify -> :8080
-#   scripts/varify-agent.sh info               # orientation
-#   scripts/varify-agent.sh run --service email --safety write-isolated --failures
+#   scripts/verify-agent.sh forward &          # port-forward svc/atlas-verify -> :8080
+#   scripts/verify-agent.sh info               # orientation
+#   scripts/verify-agent.sh run --service email --safety write-isolated --failures
 #   ... edit atlas core code, redeploy that service ...
-#   scripts/varify-agent.sh run --service email --safety write-isolated --failures
+#   scripts/verify-agent.sh run --service email --safety write-isolated --failures
 #
 # Env:
-#   VARIFY_URL           Base URL of the tester (default http://localhost:8080)
-#   VARIFY_AGENT_TOKEN   Bearer token if the /agent API is guarded
-#   VARIFY_NAMESPACE     Cluster namespace (default atlas-core)
-#   VARIFY_ADMIN_EMAIL   Admin email for `connect` / `create-admin`
-#   VARIFY_ADMIN_PASSWORD
+#   VERIFY_URL           Base URL of the tester (default http://localhost:8080)
+#   VERIFY_AGENT_TOKEN   Bearer token if the /agent API is guarded
+#   VERIFY_NAMESPACE     Cluster namespace (default atlas-core)
+#   VERIFY_ADMIN_EMAIL   Admin email for `connect` / `create-admin`
+#   VERIFY_ADMIN_PASSWORD
 #   IDENTITY_URL         Identity base URL for `create-admin` (default http://localhost:8001)
 #
 # Dependencies: bash, curl, jq, kubectl.
 set -euo pipefail
 
-VARIFY_URL="${VARIFY_URL:-http://localhost:8080}"
-VARIFY_NAMESPACE="${VARIFY_NAMESPACE:-atlas-core}"
+VERIFY_URL="${VERIFY_URL:-http://localhost:8080}"
+VERIFY_NAMESPACE="${VERIFY_NAMESPACE:-atlas-core}"
 IDENTITY_URL="${IDENTITY_URL:-http://localhost:8001}"
 
 die() { echo "error: $*" >&2; exit 1; }
@@ -34,15 +34,15 @@ need curl; need jq
 
 # Auth header for /agent requests (empty when no token configured).
 auth_header() {
-  if [[ -n "${VARIFY_AGENT_TOKEN:-}" ]]; then
-    printf 'Authorization: Bearer %s' "$VARIFY_AGENT_TOKEN"
+  if [[ -n "${VERIFY_AGENT_TOKEN:-}" ]]; then
+    printf 'Authorization: Bearer %s' "$VERIFY_AGENT_TOKEN"
   fi
 }
 
 # curl against the tester's /agent API. Usage: api METHOD PATH [json-body]
 api() {
   local method="$1" path="$2" body="${3:-}"
-  local -a args=(-sS -X "$method" "${VARIFY_URL}${path}")
+  local -a args=(-sS -X "$method" "${VERIFY_URL}${path}")
   local h; h="$(auth_header)"; [[ -n "$h" ]] && args+=(-H "$h")
   if [[ -n "$body" ]]; then
     args+=(-H 'content-type: application/json' -d "$body")
@@ -53,8 +53,8 @@ api() {
 cmd_forward() {
   need kubectl
   local port="${1:-8080}"
-  echo "port-forward svc/atlas-varify ${port}:80 (ns=${VARIFY_NAMESPACE}) — Ctrl-C to stop" >&2
-  exec kubectl -n "$VARIFY_NAMESPACE" port-forward svc/atlas-varify "${port}:80"
+  echo "port-forward svc/atlas-verify ${port}:80 (ns=${VERIFY_NAMESPACE}) — Ctrl-C to stop" >&2
+  exec kubectl -n "$VERIFY_NAMESPACE" port-forward svc/atlas-verify "${port}:80"
 }
 
 cmd_info()    { api GET /agent/info | jq .; }
@@ -71,8 +71,8 @@ cmd_catalog() {
 
 cmd_connect() {
   local body='{}'
-  if [[ -n "${VARIFY_ADMIN_EMAIL:-}" && -n "${VARIFY_ADMIN_PASSWORD:-}" ]]; then
-    body="$(jq -n --arg e "$VARIFY_ADMIN_EMAIL" --arg p "$VARIFY_ADMIN_PASSWORD" \
+  if [[ -n "${VERIFY_ADMIN_EMAIL:-}" && -n "${VERIFY_ADMIN_PASSWORD:-}" ]]; then
+    body="$(jq -n --arg e "$VERIFY_ADMIN_EMAIL" --arg p "$VERIFY_ADMIN_PASSWORD" \
       '{adminEmail:$e, adminPassword:$p}')"
   fi
   api POST /agent/connect "$body" | jq .
@@ -82,9 +82,9 @@ cmd_connect() {
 # The first user Identity ever registers auto-gets SUPERADMIN+ADMIN+USER.
 cmd_create_admin() {
   need curl
-  local email="${1:-${VARIFY_ADMIN_EMAIL:-}}" pw="${2:-${VARIFY_ADMIN_PASSWORD:-}}"
-  [[ -n "$email" && -n "$pw" ]] || die "usage: create-admin <email> <password> (or set VARIFY_ADMIN_EMAIL/PASSWORD)"
-  local first="${VARIFY_ADMIN_FIRST:-Verify}" last="${VARIFY_ADMIN_LAST:-Admin}"
+  local email="${1:-${VERIFY_ADMIN_EMAIL:-}}" pw="${2:-${VERIFY_ADMIN_PASSWORD:-}}"
+  [[ -n "$email" && -n "$pw" ]] || die "usage: create-admin <email> <password> (or set VERIFY_ADMIN_EMAIL/PASSWORD)"
+  local first="${VERIFY_ADMIN_FIRST:-Verify}" last="${VERIFY_ADMIN_LAST:-Admin}"
   echo "registering ${email} on ${IDENTITY_URL} ..." >&2
   curl -sS -X POST "${IDENTITY_URL}/api/auth/register" \
     -H 'content-type: application/json' \
@@ -139,12 +139,12 @@ cmd_run() {
 
 usage() {
   cat >&2 <<'EOF'
-varify-agent.sh <command> [args]
+verify-agent.sh <command> [args]
 
-  forward [port]              kubectl port-forward svc/atlas-varify -> localhost:PORT (default 8080)
+  forward [port]              kubectl port-forward svc/atlas-verify -> localhost:PORT (default 8080)
   info                        tester version, namespace, connection + catalog counts
   catalog [service]           suites/test counts (optionally one service)
-  connect                     connect using VARIFY_ADMIN_EMAIL/PASSWORD (or env auto-connect)
+  connect                     connect using VERIFY_ADMIN_EMAIL/PASSWORD (or env auto-connect)
   create-admin <email> <pw>   register the first/admin user on Identity (needs identity port-forward)
   run [selectors] [flags]     run tests and print summary+failures (waits by default)
   current                     current run status
@@ -155,7 +155,7 @@ varify-agent.sh <command> [args]
   run flags:     --safety LEVEL (repeatable) | --all-safety | --stop-on-failure
                  --failures (trim to fail/error) | --no-wait | --full (raw JSON)
 
-Env: VARIFY_URL, VARIFY_AGENT_TOKEN, VARIFY_NAMESPACE, VARIFY_ADMIN_EMAIL, VARIFY_ADMIN_PASSWORD, IDENTITY_URL
+Env: VERIFY_URL, VERIFY_AGENT_TOKEN, VERIFY_NAMESPACE, VERIFY_ADMIN_EMAIL, VERIFY_ADMIN_PASSWORD, IDENTITY_URL
 EOF
   exit 1
 }

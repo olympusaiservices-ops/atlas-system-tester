@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "atlas-varify.name" . }}-data
+  name: {{ include "atlas-verify.name" . }}-data
   labels:
-    {{- include "atlas-varify.labels" . | nindent 4 }}
+    {{- include "atlas-verify.labels" . | nindent 4 }}
 spec:
   accessModes:
     - {{ .Values.storage.data.accessMode }}

@@ -1,5 +1,5 @@
 {
-  "name": "atlas-varify",
+  "name": "atlas-verify",
   "version": "0.1.0",
   "private": true,
   "description": "Atlas Verify — an Atlas app that exercises every app-facing Atlas Core API endpoint and reports results in a UI.",

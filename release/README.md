@@ -9,14 +9,14 @@ Network, Portal API) and reports results in a web UI.
 ```
 curl -X POST https://<app-store-host>/api/v1/apps/sideload \
   -H "Authorization: Bearer $TOKEN" \
-  -F "tarball=@atlas-varify-<version>.tar.zst"
+  -F "tarball=@atlas-verify-<version>.tar.zst"
 ```
 
 `$TOKEN` must carry the `appstore:install` scope.
 
 ## Contents
 
-- `images/` — the `atlas-varify-api` container image (`docker save` archive)
+- `images/` — the `atlas-verify-api` container image (`docker save` archive)
 - `k8s/chart/` — Helm chart (single Deployment + Service + PVC)
 - `meta/` — version, install and app metadata
 - `scripts/init.sh` — loads the bundled image into the node runtime
@@ -24,9 +24,9 @@ curl -X POST https://<app-store-host>/api/v1/apps/sideload \
 
 ## Runtime
 
-- Exposes a primary Service named `atlas-varify` on port 80 → container 8080.
+- Exposes a primary Service named `atlas-verify` on port 80 → container 8080.
 - Serves the UI and its API from one container; persists saved test plans and
-  run history to a 1Gi PVC mounted at `/data/atlas-varify`.
+  run history to a 1Gi PVC mounted at `/data/atlas-verify`.
 - Reaches Atlas Core services via in-cluster DNS derived from the release
   namespace. No database required.
 

@@ -15,7 +15,7 @@ function svc(name: string): string {
 
 /** Best-effort read of the VERSION file so /agent/info can report a version. */
 function readVersion(): string {
-  if (process.env.VARIFY_VERSION) return process.env.VARIFY_VERSION;
+  if (process.env.VERIFY_VERSION) return process.env.VERIFY_VERSION;
   for (const p of [
     path.resolve(process.cwd(), 'VERSION'),
     path.resolve(process.cwd(), '..', 'VERSION'),
@@ -30,8 +30,8 @@ function readVersion(): string {
   return '0.0.0';
 }
 
-const adminEmail = process.env.VARIFY_ADMIN_EMAIL || undefined;
-const adminPassword = process.env.VARIFY_ADMIN_PASSWORD || undefined;
+const adminEmail = process.env.VERIFY_ADMIN_EMAIL || undefined;
+const adminPassword = process.env.VERIFY_ADMIN_PASSWORD || undefined;
 
 export interface AtlasEndpoints {
   identity: string;
@@ -46,10 +46,10 @@ export const config = {
   host: process.env.HOST || '0.0.0.0',
   namespace: ns,
   /** Directory for saved plans + run history (mounted PVC in-cluster). */
-  dataDir: process.env.VARIFY_DATA_DIR || '/data/atlas-varify',
+  dataDir: process.env.VERIFY_DATA_DIR || '/data/atlas-verify',
   /** Where the built web SPA lives relative to the server dist. */
   webDir:
-    process.env.VARIFY_WEB_DIR || path.resolve(process.cwd(), 'web', 'dist'),
+    process.env.VERIFY_WEB_DIR || path.resolve(process.cwd(), 'web', 'dist'),
 
   /**
    * Base URLs for each Atlas Core service. Defaults to in-cluster DNS but each
@@ -65,7 +65,7 @@ export const config = {
   } as AtlasEndpoints,
 
   /** The app_key this tester registers itself under in Identity. */
-  appKey: process.env.VARIFY_APP_KEY || 'atlas-varify',
+  appKey: process.env.VERIFY_APP_KEY || 'atlas-verify',
 
   /** Release version, for /agent/info. */
   version: readVersion(),
@@ -73,10 +73,10 @@ export const config = {
   // ── Headless / agent access ────────────────────────────────────────────────
   /**
    * Bearer token guarding the /agent/* API. When set, every /agent request must
-   * present it (Authorization: Bearer <token> or X-Varify-Token). When empty the
+   * present it (Authorization: Bearer <token> or X-Verify-Token). When empty the
    * agent API is open — safe only behind a localhost port-forward or in-cluster.
    */
-  agentToken: process.env.VARIFY_AGENT_TOKEN || undefined,
+  agentToken: process.env.VERIFY_AGENT_TOKEN || undefined,
   /** Admin credentials used for headless auto-connect (see auth.ensureConnected). */
   adminEmail,
   adminPassword,
@@ -85,7 +85,7 @@ export const config = {
    * cluster at startup and lazily before agent runs, without a browser.
    */
   autoConnect:
-    process.env.VARIFY_AUTO_CONNECT === 'true' ||
+    process.env.VERIFY_AUTO_CONNECT === 'true' ||
     Boolean(adminEmail && adminPassword),
 } as const;
 

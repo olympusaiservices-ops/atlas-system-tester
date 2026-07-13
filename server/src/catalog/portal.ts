@@ -73,8 +73,8 @@ export const portalSuites: Suite[] = [
           method: 'POST',
           path: '/api/v1/auth/login',
           body: {
-            email: `varify-nobody-${tag()}@example.com`,
-            password: `varify-wrong-${tag()}`,
+            email: `verify-nobody-${tag()}@example.com`,
+            password: `verify-wrong-${tag()}`,
           },
         }),
         expect: [400, 401],

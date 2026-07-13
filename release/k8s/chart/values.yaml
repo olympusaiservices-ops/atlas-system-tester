@@ -1,8 +1,8 @@
-appKey: atlas-varify
+appKey: atlas-verify
 
 images:
   api:
-    repository: registry.local/atlas/atlas-varify-api
+    repository: registry.local/atlas/atlas-verify-api
     tag: "0.1.0"
     pullPolicy: IfNotPresent
 
@@ -16,7 +16,7 @@ api:
       cpu: "1"
       memory: 512Mi
 
-# Persistent volume for saved test plans + run history (/data/atlas-varify).
+# Persistent volume for saved test plans + run history (/data/atlas-verify).
 storage:
   data:
     size: 1Gi

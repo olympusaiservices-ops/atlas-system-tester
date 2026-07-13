@@ -11,8 +11,8 @@ import {
 // Fixed throwaway resources. Mailbox + domain use stable names (no tag suffix)
 // so re-runs hit the same row instead of accumulating; their create steps
 // accept 409. Per-message and per-rule names use tag() for uniqueness.
-const PROBE_ADDRESS = 'varify-probe@varify.test';
-const PROBE_DOMAIN = 'varify-probe.test';
+const PROBE_ADDRESS = 'verify-probe@verify.test';
+const PROBE_DOMAIN = 'verify-probe.test';
 
 /**
  * Capture an id-like value into a run variable, tolerating both the Atlas
@@ -92,7 +92,7 @@ export const emailSuites: Suite[] = [
           body: {
             address: PROBE_ADDRESS,
             type: 'APP',
-            display_name: 'Varify Probe',
+            display_name: 'Verify Probe',
           },
         },
         expect: [200, 201, 409],
@@ -138,7 +138,7 @@ export const emailSuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/v1/mailboxes/{{mboxId}}/aliases',
-          body: { address: `varify-alias-${tag()}@varify.test` },
+          body: { address: `verify-alias-${tag()}@verify.test` },
         }),
         expect: [200, 201, 409],
       }),
@@ -166,9 +166,9 @@ export const emailSuites: Suite[] = [
           method: 'POST',
           path: '/api/v1/messages:send',
           body: {
-            from: { email: PROBE_ADDRESS, name: 'Varify' },
-            to: [{ email: 'varify-dest@varify.test' }],
-            subject: 'Varify probe',
+            from: { email: PROBE_ADDRESS, name: 'Verify' },
+            to: [{ email: 'verify-dest@verify.test' }],
+            subject: 'Verify probe',
             html_body: '<p>hi</p>',
             text_body: 'hi',
           },
@@ -232,7 +232,7 @@ export const emailSuites: Suite[] = [
         req: () => ({
           method: 'PATCH',
           path: '/api/v1/messages/{{msgId}}',
-          body: { labels: ['varify'] },
+          body: { labels: ['verify'] },
         }),
         expect: [200, 204],
       }),
@@ -305,7 +305,7 @@ export const emailSuites: Suite[] = [
         // No real attachment id; a nonexistent one proves route + auth wiring.
         req: () => ({
           method: 'GET',
-          path: '/api/v1/messages/{{msgId}}/attachments/varify-none/download',
+          path: '/api/v1/messages/{{msgId}}/attachments/verify-none/download',
         }),
         expect: REACHABLE,
       }),
@@ -334,7 +334,7 @@ export const emailSuites: Suite[] = [
         requires: ['msgId'],
         req: () => ({
           method: 'GET',
-          path: '/api/v1/messages/{{msgId}}/inline/varify-none/download',
+          path: '/api/v1/messages/{{msgId}}/inline/verify-none/download',
         }),
         expect: REACHABLE,
       }),
@@ -363,10 +363,10 @@ export const emailSuites: Suite[] = [
           path: '/api/v1/rules',
           body: {
             mailbox_id: v.mboxId,
-            name: `varify-rule-${tag()}`,
+            name: `verify-rule-${tag()}`,
             priority: 1,
-            predicate: { field: 'subject', op: 'contains', value: 'varify' },
-            actions: [{ type: 'ADD_LABEL', value: 'varify' }],
+            predicate: { field: 'subject', op: 'contains', value: 'verify' },
+            actions: [{ type: 'ADD_LABEL', value: 'verify' }],
           },
         }),
         expect: [200, 201],
@@ -426,7 +426,7 @@ export const emailSuites: Suite[] = [
           path: '/api/v1/rules:simulate',
           body: {
             mailbox_id: v.mboxId,
-            message: { subject: 'varify test' },
+            message: { subject: 'verify test' },
           },
         }),
         expect: [200, 400],

@@ -36,7 +36,7 @@ It covers 200+ endpoint tests across all five core services:
   + auth manager, the `/vapi/*` API, file-backed plan/run storage, and serves
   the built SPA. Exposes unauthenticated `/health/live` and `/health/ready`.
 - **`web/`** — React + Vite SPA, built to static files served by the server.
-- One container, one image; a PVC at `/data/atlas-varify` holds plans + history.
+- One container, one image; a PVC at `/data/atlas-verify` holds plans + history.
 
 ## Develop locally
 
@@ -53,7 +53,7 @@ ATLAS_EMAIL_URL=http://localhost:8002 \
 ATLAS_APPSTORE_URL=http://localhost:8003 \
 ATLAS_NETWORK_URL=http://localhost:8004 \
 ATLAS_PORTAL_API_URL=http://localhost:8005 \
-VARIFY_DATA_DIR=./data \
+VERIFY_DATA_DIR=./data \
 npm run dev          # web on :5173 (proxies /vapi + /health to the server on :8080)
 ```
 
@@ -63,13 +63,13 @@ no configuration is needed.
 ## Build & deploy
 
 ```bash
-# Produces dist/atlas-varify-<version>.tar.zst
+# Produces dist/atlas-verify-<version>.tar.zst
 scripts/build-release.sh
 
 # Sideload into the App Store
 curl -X POST https://<app-store-host>/api/v1/apps/sideload \
   -H "Authorization: Bearer $TOKEN" \
-  -F "tarball=@dist/atlas-varify-$(cat VERSION).tar.zst"
+  -F "tarball=@dist/atlas-verify-$(cat VERSION).tar.zst"
 ```
 
 ## Headless / agent access
@@ -85,9 +85,9 @@ Reach the in-cluster tester over a `kubectl port-forward`; the helper CLI wraps
 the calls:
 
 ```bash
-scripts/varify-agent.sh forward &                                   # svc/atlas-varify -> localhost:8080
-scripts/varify-agent.sh info
-scripts/varify-agent.sh run --service email --safety write-isolated --failures
+scripts/verify-agent.sh forward &                                   # svc/atlas-verify -> localhost:8080
+scripts/verify-agent.sh info
+scripts/verify-agent.sh run --service email --safety write-isolated --failures
 ```
 
 Full guide — API reference, safety levels, auth token, logs, deploy values:
@@ -101,8 +101,8 @@ Full guide — API reference, safety levels, auth token, logs, deploy values:
 | `ATLAS_NAMESPACE` | `atlas-core` | Namespace used to derive service DNS |
 | `ATLAS_IDENTITY_URL` … `ATLAS_PORTAL_API_URL` | in-cluster DNS | Per-service base URL overrides |
 | `PORT` | `8080` | HTTP port |
-| `VARIFY_DATA_DIR` | `/data/atlas-varify` | Plans + run history location |
-| `VARIFY_APP_KEY` | `atlas-varify` | App name used for self-registration |
-| `VARIFY_AGENT_TOKEN` | _(unset)_ | If set, guards every `/agent/*` request (bearer token) |
-| `VARIFY_ADMIN_EMAIL` / `VARIFY_ADMIN_PASSWORD` | _(unset)_ | Admin login for headless auto-connect |
-| `VARIFY_AUTO_CONNECT` | `false` | Connect at startup (implied when both admin creds are set) |
+| `VERIFY_DATA_DIR` | `/data/atlas-verify` | Plans + run history location |
+| `VERIFY_APP_KEY` | `atlas-verify` | App name used for self-registration |
+| `VERIFY_AGENT_TOKEN` | _(unset)_ | If set, guards every `/agent/*` request (bearer token) |
+| `VERIFY_ADMIN_EMAIL` / `VERIFY_ADMIN_PASSWORD` | _(unset)_ | Admin login for headless auto-connect |
+| `VERIFY_AUTO_CONNECT` | `false` | Connect at startup (implied when both admin creds are set) |

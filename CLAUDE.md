@@ -1,4 +1,4 @@
-# atlas-varify — notes for Claude
+# atlas-verify — notes for Claude
 
 **What this is.** An Atlas app that exercises every app-facing Atlas Core API
 endpoint (229 tests across identity / email / app-store / network / portal-api)
@@ -18,10 +18,10 @@ The tester runs in-cluster; reach it over a `kubectl port-forward` and use the
 `/agent` API. The helper wraps everything:
 
 ```bash
-scripts/varify-agent.sh forward &                                   # localhost:8080 -> svc/atlas-varify
-scripts/varify-agent.sh info                                        # orientation + connection state
-scripts/varify-agent.sh run --service email --safety write-isolated --failures
-scripts/varify-agent.sh get <runId> --failures
+scripts/verify-agent.sh forward &                                   # localhost:8080 -> svc/atlas-verify
+scripts/verify-agent.sh info                                        # orientation + connection state
+scripts/verify-agent.sh run --service email --safety write-isolated --failures
+scripts/verify-agent.sh get <runId> --failures
 ```
 
 If the pod wasn't given admin creds, connect first (needs an Atlas admin login —
@@ -35,7 +35,7 @@ the first user registered on Identity auto-gets SUPERADMIN; see
   `destructive` and `system` are **opt-in** per run (`--all-safety` or explicit
   `--safety`); don't enable them unless you mean to mutate real/global state.
 - A failing test points at a bug in the **core service under test**, not in
-  atlas-varify. Fix the core service; only touch this repo's catalog if a test
+  atlas-verify. Fix the core service; only touch this repo's catalog if a test
   itself encodes a wrong expectation.
 
 ## Building this repo

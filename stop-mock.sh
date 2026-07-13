@@ -4,24 +4,24 @@
 # WITHOUT touching the Atlas Core API Tester (mock) backend on :3004.
 #
 # Kills the Verify process group (npm/concurrently → Vite + Fastify) recorded in
-# .run/varify.pid. The mock is left running so you can restart Verify quickly;
+# .run/verify.pid. The mock is left running so you can restart Verify quickly;
 # stop the mock separately with the tester's own stop.sh.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
 RUN_DIR="$REPO/.run"
-PID_FILE="$RUN_DIR/varify.pid"
-VARIFY_SERVER_PORT="${VARIFY_SERVER_PORT:-8080}"
-VARIFY_WEB_PORT=5173
+PID_FILE="$RUN_DIR/verify.pid"
+VERIFY_SERVER_PORT="${VERIFY_SERVER_PORT:-8080}"
+VERIFY_WEB_PORT=5173
 MOCK_PORT="${MOCK_PORT:-3004}"
 
 port_in_use() { lsof -ti "tcp:$1" -sTCP:LISTEN >/dev/null 2>&1; }
 
 if [[ ! -f "$PID_FILE" ]]; then
-  echo "No .run/varify.pid — Verify does not appear to be running under run-mock.sh."
+  echo "No .run/verify.pid — Verify does not appear to be running under run-mock.sh."
   # Best-effort: if the dev ports are up but unmanaged, point that out.
-  if port_in_use "$VARIFY_WEB_PORT" || port_in_use "$VARIFY_SERVER_PORT"; then
-    echo "Note: :$VARIFY_WEB_PORT/:$VARIFY_SERVER_PORT are in use but weren't started here; not touching them."
+  if port_in_use "$VERIFY_WEB_PORT" || port_in_use "$VERIFY_SERVER_PORT"; then
+    echo "Note: :$VERIFY_WEB_PORT/:$VERIFY_SERVER_PORT are in use but weren't started here; not touching them."
   fi
   exit 0
 fi
@@ -50,8 +50,8 @@ fi
 
 rm -f "$PID_FILE"
 
-if port_in_use "$VARIFY_WEB_PORT" || port_in_use "$VARIFY_SERVER_PORT"; then
-  echo "⚠️  A Verify port is still in use; check 'lsof -i :$VARIFY_WEB_PORT -i :$VARIFY_SERVER_PORT'."
+if port_in_use "$VERIFY_WEB_PORT" || port_in_use "$VERIFY_SERVER_PORT"; then
+  echo "⚠️  A Verify port is still in use; check 'lsof -i :$VERIFY_WEB_PORT -i :$VERIFY_SERVER_PORT'."
 else
   echo "✅ Verify stopped."
 fi

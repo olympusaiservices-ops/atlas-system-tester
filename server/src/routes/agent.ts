@@ -100,7 +100,7 @@ function agentGuard(
     typeof hdr === 'string' && hdr.startsWith('Bearer ')
       ? hdr.slice(7)
       : undefined;
-  const alt = req.headers['x-varify-token'];
+  const alt = req.headers['x-verify-token'];
   const provided = bearer || (typeof alt === 'string' ? alt : undefined);
   if (provided && tokenMatches(provided, config.agentToken)) return done();
   req.log.warn({ path: req.url }, 'agent.auth.reject');
@@ -117,7 +117,7 @@ export async function registerAgentApi(app: FastifyInstance) {
 
       // ── Orientation ────────────────────────────────────────────────────────
       agent.get('/info', async () => ({
-        app: 'atlas-varify',
+        app: 'atlas-verify',
         version: config.version,
         namespace: config.namespace,
         endpoints: config.endpoints,
@@ -180,7 +180,7 @@ export async function registerAgentApi(app: FastifyInstance) {
           if (!state) {
             return reply.code(400).send({
               error:
-                'No credentials provided and none configured (set VARIFY_ADMIN_EMAIL / VARIFY_ADMIN_PASSWORD, or POST adminEmail/adminPassword).',
+                'No credentials provided and none configured (set VERIFY_ADMIN_EMAIL / VERIFY_ADMIN_PASSWORD, or POST adminEmail/adminPassword).',
             });
           }
           return state;
@@ -201,7 +201,7 @@ export async function registerAgentApi(app: FastifyInstance) {
             if (!state) {
               return reply.code(409).send({
                 error:
-                  'Not connected. POST /agent/connect first, or configure VARIFY_ADMIN_EMAIL / VARIFY_ADMIN_PASSWORD.',
+                  'Not connected. POST /agent/connect first, or configure VERIFY_ADMIN_EMAIL / VERIFY_ADMIN_PASSWORD.',
               });
             }
           } catch (err) {
