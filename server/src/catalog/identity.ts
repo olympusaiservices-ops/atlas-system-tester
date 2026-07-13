@@ -429,34 +429,6 @@ export const identitySuites: Suite[] = [
         req: { method: 'POST', path: '/api/admin/users:import', body: { rows: [] } },
         expect: [200, 201, 202, 400, 415, 422],
       }),
-      def({
-        id: 'identity.users.soft-delete',
-        suite: 'identity.users',
-        service: 'identity',
-        name: 'Soft-delete throwaway user',
-        endpoint: 'POST /api/admin/users/:id/soft-delete',
-        safety: 'write-isolated',
-        auth: 'user',
-        requires: ['newUserId'],
-        req: () => ({ method: 'POST', path: '/api/admin/users/{{newUserId}}/soft-delete' }),
-        expect: [200, 201, 204],
-      }),
-      def({
-        id: 'identity.users.hard-delete',
-        suite: 'identity.users',
-        service: 'identity',
-        name: 'Hard-delete throwaway user (cleanup)',
-        endpoint: 'POST /api/admin/users/:id/hard-delete',
-        // Cleans up our own throwaway resource; SUPERADMIN required.
-        safety: 'write-isolated',
-        auth: 'user',
-        requires: ['newUserId'],
-        req: () => ({ method: 'POST', path: '/api/admin/users/{{newUserId}}/hard-delete' }),
-        expect: [200, 201, 204, 403],
-        capture: (_b, vars) => {
-          delete vars.newUserId;
-        },
-      }),
     ],
   },
 
@@ -748,7 +720,9 @@ export const identitySuites: Suite[] = [
           body: { permission: 'verify:read', description: 'probe perm' },
         }),
         expect: [200, 201],
-        capture: capId('id', 'permission_id', 'permId')('probePermId'),
+        // createAppPermission() does a plain .returning() with no column
+        // mapping, so the raw DB column name comes back: app_permission_id.
+        capture: capId('app_permission_id', 'id', 'permission_id', 'permId')('probePermId'),
       }),
       def({
         id: 'identity.apps.perm-list',
@@ -776,7 +750,9 @@ export const identitySuites: Suite[] = [
           body: { name: `viewer-${tag()}`, description: 'probe role' },
         }),
         expect: [200, 201],
-        capture: capId('id', 'role_id', 'roleId')('probeRoleId'),
+        // createAppRole() does a plain .returning() with no column mapping,
+        // so the raw DB column name comes back: app_role_id.
+        capture: capId('app_role_id', 'id', 'role_id', 'roleId')('probeRoleId'),
       }),
       def({
         id: 'identity.apps.role-list',
@@ -812,11 +788,13 @@ export const identitySuites: Suite[] = [
         endpoint: 'PUT /api/admin/apps/:appId/roles/:roleId/permissions',
         safety: 'write-isolated',
         auth: 'user',
-        requires: ['probeAppId', 'probeRoleId'],
-        req: () => ({
+        requires: ['probeAppId', 'probeRoleId', 'probePermId'],
+        // ReplaceRolePermissionsDto wants permissionIds (an array of real
+        // permission UUIDs), not permission name strings.
+        req: (v) => ({
           method: 'PUT',
-          path: '/api/admin/apps/{{probeAppId}}/roles/{{probeRoleId}}/permissions',
-          body: { permissions: ['verify:read'] },
+          path: `/api/admin/apps/{{probeAppId}}/roles/{{probeRoleId}}/permissions`,
+          body: { permissionIds: [v.probePermId] },
         }),
         expect: [200, 204],
       }),
@@ -1003,7 +981,9 @@ export const identitySuites: Suite[] = [
           body: { name: `app-role-${tag()}`, description: 'probe' },
         }),
         expect: [200, 201, 403],
-        capture: capId('id', 'role_id')('appRoleId'),
+        // Same appRbacService.createAppRole() as identity.apps.role-create —
+        // plain .returning() means the raw column name comes back: app_role_id.
+        capture: capId('app_role_id', 'id', 'role_id')('appRoleId'),
       }),
       def({
         id: 'identity.app.role-update',
@@ -1058,10 +1038,11 @@ export const identitySuites: Suite[] = [
         safety: 'write-isolated',
         auth: 'app',
         requires: ['appId', 'appRoleId'],
+        // ReplaceRolePermissionsDto wants permissionIds, not permissions.
         req: () => ({
           method: 'PUT',
           path: '/api/apps/{{appId}}/roles/{{appRoleId}}/permissions',
-          body: { permissions: [] },
+          body: { permissionIds: [] },
         }),
         expect: [200, 204, 403],
       }),
@@ -1214,7 +1195,9 @@ export const identitySuites: Suite[] = [
           },
         }),
         expect: [200, 201],
-        capture: capId('id', 'credential_id', 'credId')('newCredId'),
+        // Response shape is camelCase (credentialId), unlike most raw
+        // .returning() results elsewhere in this file.
+        capture: capId('credentialId', 'id', 'credential_id', 'credId')('newCredId'),
       }),
       def({
         id: 'identity.creds.update',
@@ -1228,7 +1211,7 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'PATCH',
           path: '/api/admin/credentials/{{newCredId}}',
-          body: { name: 'verify-cred-updated' },
+          body: { label: 'verify-cred-updated' },
         }),
       }),
       def({
@@ -1243,7 +1226,10 @@ export const identitySuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/admin/credentials/{{newCredId}}/rotate',
-          body: { secret: { token: `verify-secret-${tag()}` } },
+          // Body must be a plain string; the controller had no validation
+          // DTO and passed it straight to Buffer.from() downstream, so a
+          // non-string here 500'd instead of 400ing (fixed in Core too).
+          body: { secret: `verify-secret-${tag()}` },
         }),
         expect: [200, 201],
       }),
@@ -1284,34 +1270,55 @@ export const identitySuites: Suite[] = [
         req: { method: 'GET', path: '/api/admin/email-templates' },
       }),
       def({
-        id: 'identity.tmpl.put',
-        suite: 'identity.email-templates',
-        service: 'identity',
-        name: 'Create/update probe template',
-        endpoint: 'PUT /api/admin/email-templates/:templateKey',
-        safety: 'write-isolated',
-        auth: 'user',
-        req: () => ({
-          method: 'PUT',
-          path: '/api/admin/email-templates/verify-probe',
-          body: {
-            subject: 'Verify probe',
-            htmlBody: '<p>Hello {{name}}</p>',
-            textBody: 'Hello {{name}}',
-          },
-        }),
-        expect: [200, 201],
-      }),
-      def({
         id: 'identity.tmpl.get',
         suite: 'identity.email-templates',
         service: 'identity',
-        name: 'Get probe template',
+        name: 'Get ADMIN_ALERT template',
+        // templateKey is a fixed enum (INVITE_WELCOME, PASSWORD_RESET,
+        // MFA_ENABLED, MFA_DISABLED, ADMIN_ALERT) — there's no such thing as
+        // creating a new, throwaway template key. No row is seeded by
+        // default (email-templates.service.ts has no seed data and isn't
+        // wired into any real send flow yet), so 404 is a legitimate
+        // fresh-install outcome, not a failure. Captures existing content
+        // when present so the write test below can round-trip it unchanged.
         endpoint: 'GET /api/admin/email-templates/:templateKey',
         safety: 'read',
         auth: 'user',
-        req: { method: 'GET', path: '/api/admin/email-templates/verify-probe' },
+        req: { method: 'GET', path: '/api/admin/email-templates/ADMIN_ALERT' },
         expect: [200, 404],
+        capture: (body, vars) => {
+          const data = unwrap(body) as any;
+          if (data) {
+            vars.tmplSubject = data.subject;
+            vars.tmplHtmlBody = data.htmlBody;
+            vars.tmplTextBody = data.textBody;
+          }
+        },
+      }),
+      def({
+        id: 'identity.tmpl.put',
+        suite: 'identity.email-templates',
+        service: 'identity',
+        name: 'Update ADMIN_ALERT template (no-op round-trip)',
+        endpoint: 'PUT /api/admin/email-templates/:templateKey',
+        // Templates are shared, org-wide content (a real customized
+        // PASSWORD_RESET/INVITE_WELCOME template must never be clobbered by
+        // a test run) — writes back the exact content identity.tmpl.get just
+        // read. If no row exists yet (fresh install, identity.tmpl.get 404'd),
+        // there's nothing real to preserve, so fall back to placeholder
+        // content instead of requiring the captured vars.
+        safety: 'write-isolated',
+        auth: 'user',
+        req: (vars) => ({
+          method: 'PUT',
+          path: '/api/admin/email-templates/ADMIN_ALERT',
+          body: {
+            subject: vars.tmplSubject ?? 'Admin Alert',
+            htmlBody: vars.tmplHtmlBody ?? '<p>Admin alert</p>',
+            textBody: vars.tmplTextBody ?? 'Admin alert',
+          },
+        }),
+        expect: [200, 201],
       }),
       def({
         id: 'identity.tmpl.preview',
@@ -1517,9 +1524,43 @@ export const identityTeardownSuites: Suite[] = [
   {
     id: 'identity.teardown',
     service: 'identity',
-    name: 'Identity · Logout (teardown)',
-    description: 'Revokes the admin session. Runs last; off by default.',
+    name: 'Identity · Teardown',
+    description:
+      'Deletes the throwaway user and revokes the admin session. Runs ' +
+      'last (after every other suite, identity included, per ALL_SUITES in ' +
+      'catalog/index.ts) so newUserId stays alive for identity.roles/apps/' +
+      'credentials, which reference it — deleting it right after ' +
+      'identity.users created it (as this used to) skips every later suite ' +
+      "that needs a real user to act on.",
     tests: [
+      def({
+        id: 'identity.users.soft-delete',
+        suite: 'identity.teardown',
+        service: 'identity',
+        name: 'Soft-delete throwaway user',
+        endpoint: 'POST /api/admin/users/:id/soft-delete',
+        safety: 'write-isolated',
+        auth: 'user',
+        requires: ['newUserId'],
+        req: () => ({ method: 'POST', path: '/api/admin/users/{{newUserId}}/soft-delete' }),
+        expect: [200, 201, 204],
+      }),
+      def({
+        id: 'identity.users.hard-delete',
+        suite: 'identity.teardown',
+        service: 'identity',
+        name: 'Hard-delete throwaway user (cleanup)',
+        endpoint: 'POST /api/admin/users/:id/hard-delete',
+        // Cleans up our own throwaway resource; SUPERADMIN required.
+        safety: 'write-isolated',
+        auth: 'user',
+        requires: ['newUserId'],
+        req: () => ({ method: 'POST', path: '/api/admin/users/{{newUserId}}/hard-delete' }),
+        expect: [200, 201, 204, 403],
+        capture: (_b, vars) => {
+          delete vars.newUserId;
+        },
+      }),
       def({
         id: 'identity.public.logout',
         suite: 'identity.teardown',

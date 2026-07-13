@@ -204,10 +204,24 @@ export const networkSuites: Suite[] = [
         auth: 'app',
         scopes: ['network:read'],
         req: { method: 'GET', path: '/api/dns/zones' },
-        assert: assertList,
+        // Not the usual {data:[...]} / {items:[...]} envelope: DNS zones
+        // come from Cloudflare, so the response is intentionally
+        // {zones: [...], configured: boolean} — `configured` tells the
+        // caller whether a Cloudflare API token is set up for this org at
+        // all (dns.service.ts listZones()). assertList doesn't apply here.
+        assert: (body) => {
+          const data = unwrap(body) as any;
+          if (!Array.isArray(data?.zones)) {
+            return ['expected an array under "zones"'];
+          }
+          if (typeof data?.configured !== 'boolean') {
+            return ['expected a boolean "configured" flag'];
+          }
+          return [];
+        },
         capture: (body, vars) => {
-          const data = unwrap(body);
-          const first = Array.isArray(data) ? data[0] : undefined;
+          const data = unwrap(body) as any;
+          const first = Array.isArray(data?.zones) ? data.zones[0] : undefined;
           const id = firstOf(first, 'id', 'zone_id');
           if (id !== undefined) vars.zoneId = id;
         },
@@ -398,7 +412,12 @@ export const networkSuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/vpn/peers',
-          body: { name: `verify-peer-${tag()}` },
+          // CreatePeerDto requires public_key (snake_case, unlike most of the
+          // rest of the API) — a throwaway placeholder value, never a real key.
+          body: {
+            name: `verify-peer-${tag()}`,
+            public_key: 'verify-probe-public-key-not-a-real-wg-key=',
+          },
         }),
         expect: [200, 201],
         capture: capId('id', 'peer_id')('peerId'),
@@ -522,7 +541,15 @@ export const networkSuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/mesh/sites',
-          body: { name: `verify-site-${tag()}` },
+          // CreateMeshSiteDto requires all of these (snake_case, unlike most
+          // of the rest of the API) — throwaway placeholder values.
+          body: {
+            name: `verify-site-${tag()}`,
+            organization_domain: 'verify-probe.test',
+            wireguard_endpoint: 'verify-probe.test:51820',
+            wireguard_public_key: 'verify-probe-public-key-not-a-real-wg-key=',
+            internal_subnet: '10.99.0.0/24',
+          },
         }),
         expect: [200, 201],
         capture: capId('id', 'site_id')('meshSiteId'),

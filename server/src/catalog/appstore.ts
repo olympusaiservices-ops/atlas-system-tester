@@ -77,7 +77,7 @@ export const appstoreSuites: Suite[] = [
         safety: 'read',
         auth: 'app',
         scopes: ['appstore:read'],
-        req: { method: 'GET', path: '/api/v1/catalog/apps', query: { limit: '5' } },
+        req: { method: 'GET', path: '/api/v1/catalog/apps', query: { pageSize: '5' } },
         assert: assertList,
         capture: (body, vars) => {
           const data = unwrap(body);
@@ -294,7 +294,15 @@ export const appstoreSuites: Suite[] = [
         auth: 'app',
         scopes: ['appstore:read'],
         req: { method: 'GET', path: '/api/v1/operations', query: { limit: '5' } },
-        capture: capId('id', 'operation_id')('operationId'),
+        // capId's firstOf(data, ...) does data['id'], which is always
+        // undefined when data is the array itself — this is a list endpoint,
+        // so the id must come from its first item, not the array wrapper.
+        capture: (body, vars) => {
+          const data = unwrap(body) as any;
+          const first = Array.isArray(data) ? data[0] : undefined;
+          const id = firstOf(first, 'id', 'operation_id');
+          if (id !== undefined) vars.operationId = id;
+        },
       }),
       def({
         id: 'appstore.operations.get',
@@ -351,7 +359,7 @@ export const appstoreSuites: Suite[] = [
         safety: 'write-isolated',
         auth: 'app',
         scopes: ['appstore:read'],
-        req: { method: 'POST', path: '/api/v1/pins', body: { app_key: 'atlas-core-identity' } },
+        req: { method: 'POST', path: '/api/v1/pins', body: { appKey: 'atlas-core-identity' } },
         expect: [200, 201, 409],
       }),
       def({
@@ -515,7 +523,7 @@ export const appstoreSuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/v1/thirdparty',
-          body: { name: `verify-tp-${tag()}`, url: 'https://example.com' },
+          body: { name: `verify-tp-${tag()}`, launchUrl: 'https://example.com' },
         }),
         expect: [200, 201],
         capture: capId('id', 'thirdparty_id')('thirdPartyId'),

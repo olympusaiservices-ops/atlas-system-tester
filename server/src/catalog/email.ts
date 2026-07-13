@@ -92,7 +92,7 @@ export const emailSuites: Suite[] = [
           body: {
             address: PROBE_ADDRESS,
             type: 'APP',
-            display_name: 'Verify Probe',
+            displayName: 'Verify Probe',
           },
         },
         expect: [200, 201, 409],
@@ -138,7 +138,7 @@ export const emailSuites: Suite[] = [
         req: () => ({
           method: 'POST',
           path: '/api/v1/mailboxes/{{mboxId}}/aliases',
-          body: { address: `verify-alias-${tag()}@verify.test` },
+          body: { aliasAddress: `verify-alias-${tag()}@verify.test` },
         }),
         expect: [200, 201, 409],
       }),
@@ -161,19 +161,24 @@ export const emailSuites: Suite[] = [
         safety: 'write-isolated',
         auth: 'app',
         scopes: ['email:send'],
+        // fromMailboxId references the probe mailbox by UUID (captured by
+        // email.mailboxes.resolve, which runs first as a 'read' test).
+        requires: ['mboxId'],
         // The runner auto-attaches an Idempotency-Key on messages:send paths.
-        req: {
+        req: (vars) => ({
           method: 'POST',
           path: '/api/v1/messages:send',
           body: {
-            from: { email: PROBE_ADDRESS, name: 'Verify' },
-            to: [{ email: 'verify-dest@verify.test' }],
+            fromMailboxId: vars.mboxId,
+            to: [{ address: 'verify-dest@verify.test' }],
             subject: 'Verify probe',
-            html_body: '<p>hi</p>',
-            text_body: 'hi',
+            htmlBody: '<p>hi</p>',
+            textBody: 'hi',
           },
-        },
-        expect: [202, 200],
+        }),
+        // Core returns 201 (a message resource was created); 202/200 also
+        // accepted in case a future async/queued send path changes this.
+        expect: [201, 202, 200],
         capture: (body, vars) => {
           capId('message_id', 'id', 'messageId')('msgId')(body, vars);
           capId('thread_id', 'threadId')('threadId')(body, vars);
@@ -223,16 +228,18 @@ export const emailSuites: Suite[] = [
         id: 'email.messages.patch',
         suite: 'email.messages',
         service: 'email',
-        name: 'Label probe message',
+        name: 'Flag probe message',
         endpoint: 'PATCH /api/v1/messages/:id',
         safety: 'write-isolated',
         auth: 'app',
         scopes: ['email:read'],
         requires: ['msgId'],
+        // UpdateMessageDto only supports flagSeen/flagFlagged/flagAnswered/
+        // folder — there's no arbitrary "labels" field.
         req: () => ({
           method: 'PATCH',
           path: '/api/v1/messages/{{msgId}}',
-          body: { labels: ['verify'] },
+          body: { flagFlagged: true },
         }),
         expect: [200, 204],
       }),
@@ -362,7 +369,7 @@ export const emailSuites: Suite[] = [
           method: 'POST',
           path: '/api/v1/rules',
           body: {
-            mailbox_id: v.mboxId,
+            mailboxId: v.mboxId,
             name: `verify-rule-${tag()}`,
             priority: 1,
             predicate: { field: 'subject', op: 'contains', value: 'verify' },
@@ -425,8 +432,8 @@ export const emailSuites: Suite[] = [
           method: 'POST',
           path: '/api/v1/rules:simulate',
           body: {
-            mailbox_id: v.mboxId,
-            message: { subject: 'verify test' },
+            mailboxId: v.mboxId,
+            messageData: { subject: 'verify test' },
           },
         }),
         expect: [200, 400],
@@ -469,7 +476,7 @@ export const emailSuites: Suite[] = [
         req: {
           method: 'GET',
           path: '/api/v1/outbox/events',
-          query: { after_id: '0' },
+          query: { cursor: '0' },
         },
       }),
       def({
@@ -508,12 +515,12 @@ export const emailSuites: Suite[] = [
         safety: 'write-isolated',
         auth: 'app',
         scopes: ['admin'],
-        // Fixed name + 409 acceptance keeps re-runs idempotent. 'name' included
-        // as a fallback key alongside 'domain'.
+        // Fixed name + 409 acceptance keeps re-runs idempotent. CreateDomainDto
+        // only accepts 'domain' (whitelisted validation rejects extra fields).
         req: {
           method: 'POST',
           path: '/api/v1/admin/domains',
-          body: { domain: PROBE_DOMAIN, name: PROBE_DOMAIN },
+          body: { domain: PROBE_DOMAIN },
         },
         expect: [200, 201, 409],
       }),

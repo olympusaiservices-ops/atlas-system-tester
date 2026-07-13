@@ -160,64 +160,61 @@ export const portalSuites: Suite[] = [
     ],
   },
 
-  // ───────────────────────── Wizard (setup) ──────────────────────
+  // ───────────────────────── Atlas Startup Config ─────────────────
   {
-    id: 'portal.wizard',
+    id: 'portal.system-startup',
     service: 'portal',
-    name: 'Portal · Setup Wizard',
+    name: 'Portal · Atlas Startup Config',
     description:
-      'The system is already initialized, so these are mostly reachability; ' +
-      'advance/complete/reset change global setup state and are opt-in.',
+      'The old /api/wizard backend (three redundant implementations touching ' +
+      'the same portal_config.wizard_* columns) was removed in deployment-notes.txt ' +
+      '§14.9 in favor of this single api/admin/system-startup backend. get/update ' +
+      'are reachability + a true no-op (empty body, only updated_at changes) so ' +
+      'they never clobber a real org\'s Mailgun/Cloudflare/Commissioner credentials; ' +
+      "complete permanently flips startup_completed (no reverse endpoint exists) so " +
+      'it stays opt-in/system.',
     tests: [
       def({
-        id: 'portal.wizard.get',
-        suite: 'portal.wizard',
+        id: 'portal.system-startup.get',
+        suite: 'portal.system-startup',
         service: 'portal',
-        name: 'Get wizard state',
-        endpoint: 'GET /api/wizard',
+        name: 'Get startup config',
+        endpoint: 'GET /api/admin/system-startup',
         safety: 'read',
         auth: 'user',
         scopes: ['portal:admin'],
-        req: { method: 'GET', path: '/api/wizard' },
+        req: { method: 'GET', path: '/api/admin/system-startup' },
         expect: [200, 403],
       }),
       def({
-        id: 'portal.wizard.advance',
-        suite: 'portal.wizard',
+        id: 'portal.system-startup.update',
+        suite: 'portal.system-startup',
         service: 'portal',
-        name: 'Advance wizard step',
-        endpoint: 'POST /api/wizard/advance',
-        // Mutates global setup state.
-        safety: 'system',
+        name: 'Update startup config (no-op)',
+        endpoint: 'PUT /api/admin/system-startup',
+        // Every field is optional and only applied when present; an empty
+        // body changes nothing but updated_at — safe against real installs
+        // that already have Mailgun/Cloudflare/Commissioner creds configured.
+        safety: 'write-isolated',
         auth: 'user',
         scopes: ['portal:admin'],
-        req: { method: 'POST', path: '/api/wizard/advance', body: {} },
-        // 409 if already complete; 400 if step preconditions are unmet.
-        expect: [200, 400, 403, 409],
+        req: { method: 'PUT', path: '/api/admin/system-startup', body: {} },
+        expect: [200, 400, 403],
       }),
       def({
-        id: 'portal.wizard.complete',
-        suite: 'portal.wizard',
+        id: 'portal.system-startup.complete',
+        suite: 'portal.system-startup',
         service: 'portal',
-        name: 'Complete wizard',
-        endpoint: 'POST /api/wizard/complete',
+        name: 'Complete startup config',
+        endpoint: 'POST /api/admin/system-startup/complete',
+        // One-way: flips startup_completed=true with no reverse endpoint,
+        // permanently dismissing the real dashboard banner/nav prompt for
+        // every org on this cluster. Opt-in only.
         safety: 'system',
         auth: 'user',
         scopes: ['portal:admin'],
-        req: { method: 'POST', path: '/api/wizard/complete', body: {} },
-        expect: [200, 400, 403, 409],
-      }),
-      def({
-        id: 'portal.wizard.reset',
-        suite: 'portal.wizard',
-        service: 'portal',
-        name: 'Reset wizard',
-        endpoint: 'POST /api/wizard/reset',
-        safety: 'system',
-        auth: 'user',
-        scopes: ['portal:admin'],
-        req: { method: 'POST', path: '/api/wizard/reset', body: {} },
-        expect: [200, 400, 403, 409],
+        req: { method: 'POST', path: '/api/admin/system-startup/complete', body: {} },
+        expect: [200, 403],
       }),
     ],
   },

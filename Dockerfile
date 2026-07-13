@@ -28,6 +28,7 @@ RUN cd server && npm install --omit=dev --no-workspaces --no-package-lock
 # Built artifacts.
 COPY --from=builder /build/server/dist ./server/dist
 COPY --from=builder /build/web/dist ./web/dist
+COPY VERSION ./VERSION
 
 # Run as non-root; the data dir is a mounted volume.
 RUN mkdir -p /data/atlas-verify \
