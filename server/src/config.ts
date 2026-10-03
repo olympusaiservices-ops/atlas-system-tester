@@ -46,7 +46,7 @@ export const config = {
   host: process.env.HOST || '0.0.0.0',
   namespace: ns,
   /** Directory for saved plans + run history (mounted PVC in-cluster). */
-  dataDir: process.env.VERIFY_DATA_DIR || '/data/atlas-verify',
+  dataDir: process.env.VERIFY_DATA_DIR || '/data/atlas-system-tester',
   /** Where the built web SPA lives relative to the server dist. */
   webDir:
     process.env.VERIFY_WEB_DIR || path.resolve(process.cwd(), 'web', 'dist'),
@@ -65,7 +65,7 @@ export const config = {
   } as AtlasEndpoints,
 
   /** The app_key this tester registers itself under in Identity. */
-  appKey: process.env.VERIFY_APP_KEY || 'atlas-verify',
+  appKey: process.env.VERIFY_APP_KEY || 'atlas-system-tester',
 
   /** Release version, for /agent/info. */
   version: readVersion(),

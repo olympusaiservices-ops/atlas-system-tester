@@ -1,8 +1,8 @@
-appKey: atlas-verify
+appKey: atlas-system-tester
 
 images:
   api:
-    repository: registry.local/atlas/atlas-verify-api
+    repository: registry.local/atlas/atlas-system-tester-api
     tag: "0.1.0"
     pullPolicy: IfNotPresent
 
@@ -16,7 +16,7 @@ api:
       cpu: "1"
       memory: 512Mi
 
-# Persistent volume for saved test plans + run history (/data/atlas-verify).
+# Persistent volume for saved test plans + run history (/data/atlas-system-tester).
 storage:
   data:
     size: 1Gi

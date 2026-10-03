@@ -1,6 +1,6 @@
 apiVersion: v2
-name: atlas-verify
-description: Atlas Verify — exercises every app-facing Atlas Core API endpoint with a UI
+name: atlas-system-tester
+description: Atlas System Tester — exercises every app-facing Atlas Core API endpoint with a UI
 type: application
 version: 0.1.0
 appVersion: "0.1.0"

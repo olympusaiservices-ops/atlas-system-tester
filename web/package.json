@@ -1,5 +1,5 @@
 {
-  "name": "@atlas-verify/web",
+  "name": "@atlas-system-tester/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",

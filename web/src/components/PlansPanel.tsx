@@ -17,12 +17,12 @@ export function PlansPanel({ plans, selectedCount, onSave, onLoad, onDelete, onI
 
   const download = () => {
     const blob = new Blob(
-      [JSON.stringify({ name: name || 'atlas-verify-plan', ...currentSelection }, null, 2)],
+      [JSON.stringify({ name: name || 'atlas-system-tester-plan', ...currentSelection }, null, 2)],
       { type: 'application/json' },
     );
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${(name || 'atlas-verify-plan').replace(/\s+/g, '-')}.json`;
+    a.download = `${(name || 'atlas-system-tester-plan').replace(/\s+/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
   };

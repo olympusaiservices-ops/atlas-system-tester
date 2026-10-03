@@ -1,8 +1,8 @@
 {
-  "name": "atlas-verify",
+  "name": "atlas-system-tester",
   "version": "0.1.0",
   "private": true,
-  "description": "Atlas Verify — an Atlas app that exercises every app-facing Atlas Core API endpoint and reports results in a UI.",
+  "description": "Atlas System Tester — an Atlas app that exercises every app-facing Atlas Core API endpoint and reports results in a UI.",
   "workspaces": [
     "server",
     "web"

@@ -117,7 +117,7 @@ export async function registerAgentApi(app: FastifyInstance) {
 
       // ── Orientation ────────────────────────────────────────────────────────
       agent.get('/info', async () => ({
-        app: 'atlas-verify',
+        app: 'atlas-system-tester',
         version: config.version,
         namespace: config.namespace,
         endpoints: config.endpoints,

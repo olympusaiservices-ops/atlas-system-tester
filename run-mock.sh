@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# run-mock.sh — run Atlas Verify against the Atlas Core API Tester (mock backend)
+# run-mock.sh — run Atlas System Tester against the Atlas Core API Tester (mock backend)
 # so you can open and iterate on the Verify UI without the live cluster.
 #
 # What it does:
@@ -66,9 +66,9 @@ wait_for_port() {
 pid_alive() { [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; }
 
 echo "=================================================="
-echo "  This is the mock version of Atlas Verify"
+echo "  This is the mock version of Atlas System Tester"
 echo "=================================================="
-echo "Atlas Verify — mock mode"
+echo "Atlas System Tester — mock mode"
 echo "  mock backend : http://localhost:$MOCK_PORT   (Atlas Core API Tester)"
 echo "  verify api   : http://localhost:$VERIFY_SERVER_PORT"
 echo "  verify UI    : http://localhost:$VERIFY_WEB_PORT"
@@ -145,9 +145,9 @@ LAN_IP="$(lan_ip)"
 
 echo
 echo "=================================================="
-echo "  This is the mock version of Atlas Verify"
+echo "  This is the mock version of Atlas System Tester"
 echo "=================================================="
-echo "✅ Atlas Verify is up in mock mode (pid $(cat "$PID_FILE"))."
+echo "✅ Atlas System Tester is up in mock mode (pid $(cat "$PID_FILE"))."
 echo "   UI (this machine) : http://localhost:$VERIFY_WEB_PORT"
 if [[ -n "$LAN_IP" ]]; then
   echo "   UI (same network) : http://$LAN_IP:$VERIFY_WEB_PORT   ← share this address"

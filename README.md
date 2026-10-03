@@ -1,4 +1,4 @@
-# Atlas Verify
+# Atlas System Tester
 
 An Atlas app that **exercises every app-facing Atlas Core API endpoint** and
 reports the result of each call in a live web UI. Deploys to an Atlas RKE2
@@ -23,7 +23,7 @@ It covers 200+ endpoint tests across all five core services:
 - **Safety scoping** — `read` and isolated `write` tests run by default;
   `destructive` and `system` tests are opt-in per run. Write tests create
   throwaway resources and clean them up; they never touch pre-existing data.
-- **Auto-provisioning auth** — sign in with an admin account; Atlas Verify logs
+- **Auto-provisioning auth** — sign in with an admin account; Atlas System Tester logs
   in for a user token, self-registers an app, and mints a scoped M2M token to
   reach the email/app-store/network APIs.
 - **Saveable plans** — store any selection + options as a named test plan (JSON
@@ -36,7 +36,7 @@ It covers 200+ endpoint tests across all five core services:
   + auth manager, the `/vapi/*` API, file-backed plan/run storage, and serves
   the built SPA. Exposes unauthenticated `/health/live` and `/health/ready`.
 - **`web/`** — React + Vite SPA, built to static files served by the server.
-- One container, one image; a PVC at `/data/atlas-verify` holds plans + history.
+- One container, one image; a PVC at `/data/atlas-system-tester` holds plans + history.
 
 ## Develop locally
 
@@ -63,13 +63,13 @@ no configuration is needed.
 ## Build & deploy
 
 ```bash
-# Produces dist/atlas-verify-<version>.tar.zst
+# Produces dist/atlas-system-tester-<version>.tar.zst
 scripts/build-release.sh
 
 # Sideload into the App Store
 curl -X POST https://<app-store-host>/api/v1/apps/sideload \
   -H "Authorization: Bearer $TOKEN" \
-  -F "tarball=@dist/atlas-verify-$(cat VERSION).tar.zst"
+  -F "tarball=@dist/atlas-system-tester-$(cat VERSION).tar.zst"
 ```
 
 ## Headless / agent access
@@ -85,7 +85,7 @@ Reach the in-cluster tester over a `kubectl port-forward`; the helper CLI wraps
 the calls:
 
 ```bash
-scripts/verify-agent.sh forward &                                   # svc/atlas-verify -> localhost:8080
+scripts/verify-agent.sh forward &                                   # svc/atlas-system-tester -> localhost:8080
 scripts/verify-agent.sh info
 scripts/verify-agent.sh run --service email --safety write-isolated --failures
 ```
@@ -101,8 +101,8 @@ Full guide — API reference, safety levels, auth token, logs, deploy values:
 | `ATLAS_NAMESPACE` | `atlas-core` | Namespace used to derive service DNS |
 | `ATLAS_IDENTITY_URL` … `ATLAS_PORTAL_API_URL` | in-cluster DNS | Per-service base URL overrides |
 | `PORT` | `8080` | HTTP port |
-| `VERIFY_DATA_DIR` | `/data/atlas-verify` | Plans + run history location |
-| `VERIFY_APP_KEY` | `atlas-verify` | App name used for self-registration |
+| `VERIFY_DATA_DIR` | `/data/atlas-system-tester` | Plans + run history location |
+| `VERIFY_APP_KEY` | `atlas-system-tester` | App name used for self-registration |
 | `VERIFY_AGENT_TOKEN` | _(unset)_ | If set, guards every `/agent/*` request (bearer token) |
 | `VERIFY_ADMIN_EMAIL` / `VERIFY_ADMIN_PASSWORD` | _(unset)_ | Admin login for headless auto-connect |
 | `VERIFY_AUTO_CONNECT` | `false` | Connect at startup (implied when both admin creds are set) |

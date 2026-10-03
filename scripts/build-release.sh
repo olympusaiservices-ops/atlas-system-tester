@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Build the atlas-verify release tarball: builds the container image, exports it,
+# Build the atlas-system-tester release tarball: builds the container image, exports it,
 # assembles the package per the Atlas App Release Package Standard, and produces
-# dist/atlas-verify-<version>.tar.zst (falls back to .tar.gz if zstd is absent).
+# dist/atlas-system-tester-<version>.tar.zst (falls back to .tar.gz if zstd is absent).
 #
 # Usage: scripts/build-release.sh [version]
 set -euo pipefail
@@ -10,7 +10,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-APP_KEY="atlas-verify"
+APP_KEY="atlas-system-tester"
 VERSION="${1:-$(cat VERSION 2>/dev/null || echo 0.1.0)}"
 REGISTRY="${REGISTRY:-registry.local/atlas}"
 # Override with DOCKER='sudo docker' if your user is not in the docker group.

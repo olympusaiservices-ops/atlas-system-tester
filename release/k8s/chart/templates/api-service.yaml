@@ -3,13 +3,13 @@ kind: Service
 metadata:
   # The Service name MUST equal appKey so the app is reachable at
   # http://{appKey}.{namespace}.svc.cluster.local
-  name: {{ include "atlas-verify.name" . }}
+  name: {{ include "atlas-system-tester.name" . }}
   labels:
-    {{- include "atlas-verify.labels" . | nindent 4 }}
+    {{- include "atlas-system-tester.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app: {{ include "atlas-verify.name" . }}
+    app: {{ include "atlas-system-tester.name" . }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}

@@ -188,7 +188,7 @@ export function App() {
   }
 
   if (!catalog) {
-    return <div className="empty">Loading Atlas Verify…</div>;
+    return <div className="empty">Loading Atlas System Tester…</div>;
   }
 
   const dangerSelected = safety.has('destructive') || safety.has('system');
@@ -201,7 +201,7 @@ export function App() {
             <rect width="32" height="32" rx="7" fill="#1b2542" />
             <path d="M9 17.5l4.5 4.5L23 11" fill="none" stroke="#4ade80" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Atlas Verify
+          Atlas System Tester
         </h1>
         <span className="small muted">
           {catalog.counts.tests} tests · {catalog.counts.suites} suites · ns <b>{catalog.namespace}</b>

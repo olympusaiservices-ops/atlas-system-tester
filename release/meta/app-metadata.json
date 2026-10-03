@@ -1,5 +1,5 @@
 {
-  "display_name": "Atlas Verify",
+  "display_name": "Atlas System Tester",
   "category": "developer-tools",
   "tags": ["testing", "diagnostics", "api", "qa", "atlas-core"],
   "maintainer": "Brandon",
@@ -13,7 +13,7 @@
     "index": "images/index.json"
   },
   "service": {
-    "primary_service_name": "atlas-verify",
+    "primary_service_name": "atlas-system-tester",
     "ports": [80]
   }
 }

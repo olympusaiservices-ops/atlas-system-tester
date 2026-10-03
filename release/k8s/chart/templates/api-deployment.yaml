@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "atlas-verify.name" . }}
+  name: {{ include "atlas-system-tester.name" . }}
   labels:
-    {{- include "atlas-verify.labels" . | nindent 4 }}
+    {{- include "atlas-system-tester.labels" . | nindent 4 }}
     app.kubernetes.io/component: api
 spec:
   replicas: {{ .Values.api.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "atlas-verify.name" . }}
+      app: {{ include "atlas-system-tester.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "atlas-verify.name" . }}
+        app: {{ include "atlas-system-tester.name" . }}
         app.kubernetes.io/component: api
     spec:
       containers:
@@ -32,7 +32,7 @@ spec:
             - name: PORT
               value: "{{ .Values.service.targetPort }}"
             - name: VERIFY_DATA_DIR
-              value: "/data/atlas-verify"
+              value: "/data/atlas-system-tester"
             # Explicit per-service overrides (constructed here, not in values.yaml).
             - name: ATLAS_IDENTITY_URL
               value: "http://atlas-core-identity.{{ .Release.Namespace }}.svc.cluster.local"
@@ -50,19 +50,19 @@ spec:
             - name: VERIFY_AGENT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "atlas-verify.name" . }}-agent
+                  name: {{ include "atlas-system-tester.name" . }}-agent
                   key: VERIFY_AGENT_TOKEN
                   optional: true
             - name: VERIFY_ADMIN_EMAIL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "atlas-verify.name" . }}-agent
+                  name: {{ include "atlas-system-tester.name" . }}-agent
                   key: VERIFY_ADMIN_EMAIL
                   optional: true
             - name: VERIFY_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "atlas-verify.name" . }}-agent
+                  name: {{ include "atlas-system-tester.name" . }}-agent
                   key: VERIFY_ADMIN_PASSWORD
                   optional: true
             {{- range $key, $value := .Values.env }}
@@ -73,7 +73,7 @@ spec:
             {{- toYaml .Values.api.resources | nindent 12 }}
           volumeMounts:
             - name: data
-              mountPath: /data/atlas-verify
+              mountPath: /data/atlas-system-tester
           livenessProbe:
             httpGet:
               path: /health/live
@@ -89,4 +89,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: {{ include "atlas-verify.name" . }}-data
+            claimName: {{ include "atlas-system-tester.name" . }}-data

@@ -4,7 +4,7 @@ set -euo pipefail
 info() { echo "INFO  [init.sh] $*"; }
 err()  { echo "ERROR [init.sh] $*" >&2; }
 
-info "Starting init for ${APP_KEY:-atlas-verify} v${RELEASE_VERSION:-?} in namespace ${ORG_NAMESPACE:-?}"
+info "Starting init for ${APP_KEY:-atlas-system-tester} v${RELEASE_VERSION:-?} in namespace ${ORG_NAMESPACE:-?}"
 
 # --- Load container images into the node runtime (ctr/crictl) ---
 IMAGES_DIR="${APP_PACKAGE_ROOT}/images"
@@ -37,4 +37,4 @@ else
   info "No images directory found; skipping image load"
 fi
 
-info "Init complete for ${APP_KEY:-atlas-verify} v${RELEASE_VERSION:-?}"
+info "Init complete for ${APP_KEY:-atlas-system-tester} v${RELEASE_VERSION:-?}"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# stop-mock.sh — stop the Atlas Verify dev processes started by run-mock.sh,
+# stop-mock.sh — stop the Atlas System Tester dev processes started by run-mock.sh,
 # WITHOUT touching the Atlas Core API Tester (mock) backend on :3004.
 #
 # Kills the Verify process group (npm/concurrently → Vite + Fastify) recorded in

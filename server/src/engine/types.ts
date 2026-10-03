@@ -1,4 +1,4 @@
-// Core domain model for the Atlas Verify test engine.
+// Core domain model for the Atlas System Tester test engine.
 
 /** Which Atlas Core service a test targets. */
 export type ServiceKey =

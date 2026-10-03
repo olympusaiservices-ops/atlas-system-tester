@@ -1,6 +1,6 @@
 # Headless / Agent Access
 
-This guide is for driving **Atlas Verify** without the browser UI — specifically
+This guide is for driving **Atlas System Tester** without the browser UI — specifically
 so a **Claude instance running on this host** can exercise the live Atlas Core
 API, read structured pass/fail results, and iterate on Atlas core code in real
 time.
@@ -12,19 +12,19 @@ time.
 > 3. Edit the offending **Atlas core** service's code and redeploy it.
 > 4. `run` the same suite again and confirm it now passes.
 >
-> Atlas Verify is the feedback instrument in that loop; it does not change Atlas
+> Atlas System Tester is the feedback instrument in that loop; it does not change Atlas
 > core itself.
 
 ---
 
 ## 1. Topology
 
-`atlas-verify` runs as a pod in the `atlas-core` namespace and reaches the core
+`atlas-system-tester` runs as a pod in the `atlas-core` namespace and reaches the core
 services over in-cluster DNS. A host-side agent reaches the **tester** over a
 `kubectl port-forward`:
 
 ```
-Claude (this host) ──curl──▶ localhost:8080 ──port-forward──▶ svc/atlas-verify (in-cluster)
+Claude (this host) ──curl──▶ localhost:8080 ──port-forward──▶ svc/atlas-system-tester (in-cluster)
                                                                    │
                                         in-cluster DNS ────────────┴───▶ atlas-core-identity / email / app-store / network / portal-api
 ```
@@ -45,7 +45,7 @@ kubectl -n atlas-core port-forward svc/atlas-core-identity 8001:80 &
 scripts/verify-agent.sh create-admin verify-admin@verify.test 'S0me-Str0ng-Pw!'
 
 # 1. Port-forward the tester itself.
-scripts/verify-agent.sh forward &          # svc/atlas-verify -> localhost:8080
+scripts/verify-agent.sh forward &          # svc/atlas-system-tester -> localhost:8080
 
 # 2. Point the helper at your admin creds and connect.
 export VERIFY_ADMIN_EMAIL=verify-admin@verify.test
@@ -170,7 +170,7 @@ The helper's `run` also honors `VERIFY_URL` (default `http://localhost:8080`) an
 ## 6. Logs
 
 The server emits one structured (pino JSON) stream to stdout, so
-`kubectl -n atlas-core logs deploy/atlas-verify -f` shows requests **and** run
+`kubectl -n atlas-core logs deploy/atlas-system-tester -f` shows requests **and** run
 progress together. Run lifecycle lines:
 
 | `msg` | Fields |
@@ -192,7 +192,7 @@ turnkey for headless use:
 scripts/build-release.sh
 curl -X POST https://<app-store-host>/api/v1/apps/sideload \
   -H "Authorization: Bearer $TOKEN" \
-  -F "tarball=@dist/atlas-verify-$(cat VERSION).tar.zst" \
+  -F "tarball=@dist/atlas-system-tester-$(cat VERSION).tar.zst" \
   -F 'values_overrides={"agent":{"token":"s3cr3t","adminEmail":"verify-admin@verify.test","adminPassword":"S0me-Str0ng-Pw!","autoConnect":true}}'
 ```
 

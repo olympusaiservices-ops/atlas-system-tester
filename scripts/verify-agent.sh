@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# verify-agent.sh — drive the atlas-verify tester headlessly from this host.
+# verify-agent.sh — drive the atlas-system-tester tester headlessly from this host.
 #
 # Intended for a Claude instance (or a human) on a machine with kubectl access
 # to the atlas-core cluster. It talks to the tester's /agent API over a local
 # kubectl port-forward, so the tester can run in-cluster while you drive it here.
 #
 # Typical loop:
-#   scripts/verify-agent.sh forward &          # port-forward svc/atlas-verify -> :8080
+#   scripts/verify-agent.sh forward &          # port-forward svc/atlas-system-tester -> :8080
 #   scripts/verify-agent.sh info               # orientation
 #   scripts/verify-agent.sh run --service email --safety write-isolated --failures
 #   ... edit atlas core code, redeploy that service ...
@@ -53,8 +53,8 @@ api() {
 cmd_forward() {
   need kubectl
   local port="${1:-8080}"
-  echo "port-forward svc/atlas-verify ${port}:80 (ns=${VERIFY_NAMESPACE}) — Ctrl-C to stop" >&2
-  exec kubectl -n "$VERIFY_NAMESPACE" port-forward svc/atlas-verify "${port}:80"
+  echo "port-forward svc/atlas-system-tester ${port}:80 (ns=${VERIFY_NAMESPACE}) — Ctrl-C to stop" >&2
+  exec kubectl -n "$VERIFY_NAMESPACE" port-forward svc/atlas-system-tester "${port}:80"
 }
 
 cmd_info()    { api GET /agent/info | jq .; }
@@ -141,7 +141,7 @@ usage() {
   cat >&2 <<'EOF'
 verify-agent.sh <command> [args]
 
-  forward [port]              kubectl port-forward svc/atlas-verify -> localhost:PORT (default 8080)
+  forward [port]              kubectl port-forward svc/atlas-system-tester -> localhost:PORT (default 8080)
   info                        tester version, namespace, connection + catalog counts
   catalog [service]           suites/test counts (optionally one service)
   connect                     connect using VERIFY_ADMIN_EMAIL/PASSWORD (or env auto-connect)

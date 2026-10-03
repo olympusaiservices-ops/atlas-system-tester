@@ -290,7 +290,7 @@ export class AuthManager {
         // (the scopes guard treats `admin` as a wildcard); without a scope grant
         // the token carries none and every auth:'app' test 403s.
         name: config.appKey,
-        description: 'Atlas Verify — automated core API tester',
+        description: 'Atlas System Tester — automated core API tester',
         loginModes: [],
         scopes: APP_TOKEN_SCOPES,
       },
